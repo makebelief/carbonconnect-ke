@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Impact | CarbonConnect Kenya</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .public-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-link {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-color);
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .login-btn {
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            background: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .login-btn:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .signup-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .signup-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .page-header {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                        url('/static/img/kenya-landscape.jpg') no-repeat center center;
+            background-size: cover;
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .page-header p {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .content-container {
+            max-width: 1000px;
+            margin: 0 auto 4rem;
+            padding: 0 1.5rem;
+        }
+        
+        .impact-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin: 2rem auto;
+            justify-content: center;
+            max-width: 1400px;
+            padding: 0 1rem;
+        }
+        
+        .stat-card {
+            flex: 1;
+            min-width: 280px;
+            max-width: 300px;
+            background: var(--card-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: auto;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            opacity: 0.95;
+            z-index: -1;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .stat-icon {
+            font-size: 2.8rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .stat-value {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            line-height: 1.1;
+            word-wrap: break-word;
+            position: relative;
+        }
+        
+        .stat-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+            line-height: 1.3;
+            padding: 0 0.5rem;
+            font-weight: 500;
+            position: relative;
+        }
+        
+        .impact-section {
+            margin-bottom: 3rem;
+        }
+        
+        .impact-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .impact-section p {
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+        
+        .charts-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin: 2rem auto;
+            justify-content: center;
+            max-width: 1400px;
+        }
+        
+        .chart-card {
+            flex: 1;
+            min-width: 300px;
+            background-color: white;
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            margin: 1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .chart-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .chart-card h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+        
+        .chart-image {
+            height: 250px;
+            width: 100%;
+            object-fit: contain;
+            border-radius: var(--radius-md);
+            margin: 0 auto;
+            display: block;
+        }
+        
+        .chart-caption {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+        
+        .success-stories {
+            margin-top: 3rem;
+        }
+        
+        .stories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .story-card {
+            background-color: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .story-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .story-image {
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .story-content {
+            padding: 1.5rem;
+        }
+        
+        .story-content h3 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        .story-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        
+        .story-meta img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .story-excerpt {
+            line-height: 1.6;
+        }
+        
+        .read-more {
+            display: inline-block;
+            margin-top: 1rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .read-more:hover {
+            text-decoration: underline;
+        }
+        
+        .sdg-section {
+            margin-top: 3rem;
+        }
+        
+        .sdg-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .sdg-item {
+            text-align: center;
+        }
+        
+        .sdg-item img {
+            width: 100%;
+            max-width: 120px;
+            height: auto;
+            margin-bottom: 0.5rem;
+            transition: transform 0.3s;
+        }
+        
+        .sdg-item:hover img {
+            transform: scale(1.05);
+        }
+        
+        .sdg-item p {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .cta-section {
+            background-color: var(--bg-light);
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-top: 3rem;
+            border-radius: var(--radius-lg);
+        }
+        
+        .cta-section h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .cta-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        
+        .cta-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .cta-secondary {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 0.8rem 2rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .cta-secondary:hover {
+            background-color: var(--primary-light);
+        }
+        
+        @media (max-width: 768px) {
+            .impact-stats, .charts-container {
+                flex-direction: column;
+            }
+            
+            .stat-card {
+                min-width: 320px;
+                padding: 1.5rem;
+            }
+            
+            .stat-value {
+                font-size: 2.8rem;
+            }
+            
+            .stat-label {
+                font-size: 1.2rem;
+            }
+        }
+
+        .hero-section {
+            position: relative;
+            background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75));
+            color: white;
+            padding: 6rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-slideshow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .hero-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .hero-slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 1;
+        }
+
+        .hero-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: relative;
+        }
+
+        .hero-slide.active {
+            opacity: 1;
+        }
+
+        .hero-section h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .hero-section p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <header class="public-header">
+        <div class="logo">
+            <img src="/static/img/logo.png" alt="CarbonConnect Logo">
+            <h1>CarbonConnect<span>Kenya</span></h1>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" class="nav-link">Dashboard</a>
+            <a href="/explore.html" class="nav-link">Explore Projects</a>
+            <a href="/how-it-works.html" class="nav-link">How It Works</a>
+            <a href="/about.html" class="nav-link">About Us</a>
+            <a href="/impact.html" class="nav-link active">Impact</a>
+        </nav>
+        <div class="auth-buttons">
+            <button class="login-btn">Log In</button>
+            <button class="signup-btn">Sign Up</button>
+        </div>
+    </header>
+    
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>Our Impact</h1>
+            <p>See how CarbonConnect is transforming lives and protecting our environment across Kenya.</p>
+        </div>
+        <div class="hero-slideshow">
+            <div class="hero-slide active">
+                <img src="/static/img/slides/industrial-emissions.jpg" alt="Industrial emissions">
+            </div>
+            <div class="hero-slide">
+                <img src="/static/img/slides/carbon-reduction.jpg" alt="Carbon reduction concept">
+            </div>
+            <div class="hero-slide">
+                <img src="/static/img/slides/farmer-phone.jpg" alt="Farmer using mobile phone">
+            </div>
+        </div>
+    </section>
+    
+    <div class="content-container">
+        <div class="impact-stats">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-tree"></i></div>
+                <div class="stat-value">250,000+</div>
+                <div class="stat-label">Target Trees to Plant</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-leaf"></i></div>
+                <div class="stat-value">15,000+</div>
+                <div class="stat-label">Projected CO₂ Sequestration (Tons)</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-value">2,500+</div>
+                <div class="stat-label">Target Farmers to Support</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                <div class="stat-value">$750,000+</div>
+                <div class="stat-label">Projected Farmer Income</div>
+            </div>
+        </div>
+        
+        <div class="impact-section">
+            <h2>Environmental Impact</h2>
+            <p>Our platform aims to facilitate significant environmental benefits across Kenya. Through planned agroforestry, reforestation, and sustainable agriculture projects, we project to help sequester carbon, restore degraded lands, protect biodiversity, and improve soil health.</p>
+            
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Carbon Sequestration by Project Type</h3>
+                    <img src="/static/img/charts/carbon-sequestration.svg" alt="Pie chart showing carbon sequestration by project type" class="chart-image">
+                    <p class="chart-caption">Distribution of carbon sequestration: Agroforestry (45%), Reforestation (30%), Conservation Agriculture (15%), and Soil Carbon (10%)</p>
+                </div>
+                
+                <div class="chart-card">
+                    <h3>Environmental Impact Growth</h3>
+                    <img src="/static/img/charts/environmental-impact.svg" alt="Line graph showing environmental impact growth over time" class="chart-image">
+                    <p class="chart-caption">Projected growth in trees planted and CO₂ sequestered from 2024 to 2028</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="impact-section">
+            <h2>Social and Economic Impact</h2>
+            <p>Beyond environmental benefits, our platform aims to create significant social and economic value for farming communities. Farmers participating in carbon projects will receive additional income, training in sustainable practices, and access to new markets.</p>
+            
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Farmer Income Sources</h3>
+                    <img src="/static/img/charts/farmer-income.svg" alt="Bar chart comparing farmer income sources" class="chart-image">
+                    <p class="chart-caption">Comparison of farmer income sources: Current vs. With CarbonConnect support</p>
+                </div>
+                
+                <div class="chart-card">
+                    <h3>Community Benefits</h3>
+                    <img src="/static/img/charts/community-benefits.svg" alt="Radar chart showing community benefits across multiple dimensions" class="chart-image">
+                    <p class="chart-caption">Target impact scores across key community benefit areas</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="success-stories">
+            <h2>Vision for Success</h2>
+            <p>Here are some examples of the transformative impact we aim to achieve through our platform:</p>
+            
+            <div class="stories-grid">
+                <div class="story-card">
+                    <div class="member-photo" style="background-image: url('https://images.unsplash.com/photo-1594498653385-d5172c532c00?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1287&q=80');"></div>
+                    <div class="story-content">
+                        <h3>Transforming Degraded Land</h3>
+                        <div class="story-meta">
+                            <img src="https://images.unsplash.com/photo-1594498653385-d5172c532c00?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80" alt="Example Farm">
+                            <span>Sample Project, Nakuru County</span>
+                        </div>
+                        <p class="story-excerpt">Our vision includes helping farmers transform 5-acre degraded lands into thriving agroforestry systems with over 2,000 trees and diverse crops, targeting 300% income increase while sequestering carbon.</p>
+                        <!-- <a href="#" class="read-more">Learn More</a> -->
+                    </div>
+                </div>
+                
+                <div class="story-card">
+                    <div class="member-photo" style="background-image: url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1313&q=80');"></div>
+                    <div class="story-content">
+                        <h3>Community Forest Restoration Goals</h3>
+                        <div class="story-meta">
+                            <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80" alt="Forest">
+                            <span>Planned Initiative, Kakamega</span>
+                        </div>
+                        <p class="story-excerpt">We aim to support community-led initiatives to restore 200 hectares of degraded forest land, creating sustainable livelihoods for 150 families while protecting vital water sources.</p>
+                        <!-- <a href="#" class="read-more">Learn More</a> -->
+                    </div>
+                </div>
+                
+                <div class="story-card">
+                    <div class="member-photo" style="background-image: url('https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1288&q=80');"></div>
+                    <div class="story-content">
+                        <h3>Youth Climate Action Initiative</h3>
+                        <div class="story-meta">
+                            <img src="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80" alt="Urban Garden">
+                            <span>Proposed Project, Nairobi</span>
+                        </div>
+                        <p class="story-excerpt">We plan to support young people from urban areas in creating urban gardens and tree nurseries, generating income from carbon credits while improving their environment.</p>
+                        <!-- <a href="#" class="read-more">Learn More</a> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="sdg-section">
+            <h2>Contributing to Sustainable Development Goals</h2>
+            <p>Our work directly contributes to multiple UN Sustainable Development Goals (SDGs):</p>
+            
+            <div class="sdg-grid">
+                <div class="sdg-item">
+                    <img src="https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-01.jpg" alt="SDG 1 - No Poverty">
+                    <p>No Poverty</p>
+                </div>
+                <div class="sdg-item">
+                    <img src="https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-02.jpg" alt="SDG 2 - Zero Hunger">
+                    <p>Zero Hunger</p>
+                </div>
+                <div class="sdg-item">
+                    <img src="https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-08.jpg" alt="SDG 8 - Decent Work and Economic Growth">
+                    <p>Decent Work and Economic Growth</p>
+                </div>
+                <div class="sdg-item">
+                    <img src="https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-13.jpg" alt="SDG 13 - Climate Action">
+                    <p>Climate Action</p>
+                </div>
+                <div class="sdg-item">
+                    <img src="https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-15.jpg" alt="SDG 15 - Life on Land">
+                    <p>Life on Land</p>
+                </div>
+                <div class="sdg-item">
+                    <img src="https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-17.jpg" alt="SDG 17 - Partnerships for the Goals">
+                    <p>Partnerships for the Goals</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cta-section">
+            <h2>Help Us Achieve This Impact</h2>
+            <p>Join our growing community and help us turn these projections into reality. Together, we can make a difference in Kenya and beyond.</p>
+            <div class="cta-buttons">
+                <a href="/explore.html" class="cta-primary">Explore Planned Projects</a>
+                <a href="/submit-project.html" class="cta-secondary">Submit Your Project</a>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="app-footer">
+        <p>&copy; 2025 CarbonConnect Kenya | Empowering smallholder farmers in the carbon market</p>
+    </footer>
+    
+    <script>
+        // Handle auth buttons
+        document.querySelector('.login-btn').addEventListener('click', function() {
+            window.location.href = '/login';
+        });
+        
+        document.querySelector('.signup-btn').addEventListener('click', function() {
+            window.location.href = '/register';
+        });
+        
+        // Handle dashboard link click if it exists
+        const dashboardLink = document.getElementById('dashboard-link');
+        if (dashboardLink) {
+            dashboardLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Check if user is authenticated
+                fetch('/api/user/profile', { credentials: 'include' })
+                    .then(response => {
+                        if (!response.ok) {
+                            // User is not authenticated, redirect to login
+                            window.location.href = '/login?redirect=/index.html';
+                        } else {
+                            // User is authenticated, proceed to dashboard
+                            window.location.href = '/index.html';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking authentication:', error);
+                        // Redirect to login on error
+                        window.location.href = '/login?redirect=/index.html';
+                    });
+            });
+        }
+        
+        // Hero slideshow functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const slides = document.querySelectorAll('.hero-slide');
+            let currentSlide = 0;
+            
+            function nextSlide() {
+                slides[currentSlide].classList.remove('active');
+                currentSlide = (currentSlide + 1) % slides.length;
+                slides[currentSlide].classList.add('active');
+            }
+            
+            // Change slide every 5 seconds
+            setInterval(nextSlide, 5000);
+        });
+    </script>
+</body>
+</html>

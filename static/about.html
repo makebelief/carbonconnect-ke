@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us | CarbonConnect Kenya</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .public-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-link {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-color);
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .login-btn {
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            background: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .login-btn:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .signup-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .signup-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .page-header {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                        url('/static/img/kenya-landscape.jpg') no-repeat center center;
+            background-size: cover;
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .page-header p {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .content-container {
+            max-width: 1000px;
+            margin: 0 auto 4rem;
+            padding: 0 1.5rem;
+        }
+        
+        .about-section {
+            margin-bottom: 3rem;
+        }
+        
+        .about-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .about-section p {
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+        
+        .mission-vision {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .mission, .vision {
+            flex: 1;
+            background-color: var(--bg-light);
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .mission h3, .vision h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .mission i, .vision i {
+            color: var(--accent-color);
+        }
+        
+        .team-section {
+            margin-top: 3rem;
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .team-member {
+            background-color: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .team-member:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .member-photo {
+            height: 250px;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .member-info {
+            padding: 1.5rem;
+        }
+        
+        .member-info h3 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        .member-role {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .member-bio {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .member-social {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .member-social a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .member-social a:hover {
+            color: var(--primary-color);
+        }
+        
+        .partners-section {
+            margin-top: 3rem;
+        }
+        
+        .partners-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .partner {
+            width: 180px;
+            height: 100px;
+            background-color: white;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .partner img {
+            max-width: 100%;
+            max-height: 80px;
+            object-fit: contain;
+        }
+        
+        .cta-section {
+            background-color: var(--bg-light);
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-top: 3rem;
+            border-radius: var(--radius-lg);
+        }
+        
+        .cta-section h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .cta-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        
+        .cta-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .cta-secondary {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 0.8rem 2rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .cta-secondary:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .app-footer {
+            background-color: var(--bg-light);
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .footer-content {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .footer-social {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-social a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .footer-social a:hover {
+            color: var(--primary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .mission-vision {
+                flex-direction: column;
+            }
+        }
+        
+        .sdg-section {
+            margin-top: 3rem;
+            text-align: center;
+        }
+        
+        .sdg-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .sdg-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .sdg-item:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .sdg-item img {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+        
+        .sdg-item p {
+            font-weight: 500;
+            color: var(--text-color);
+            margin: 0;
+            text-align: center;
+        }
+
+        .hero-section {
+            position: relative;
+            background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75));
+            color: white;
+            padding: 6rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-slideshow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .hero-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .hero-slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 1;
+        }
+
+        .hero-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: relative;
+        }
+
+        .hero-slide.active {
+            opacity: 1;
+        }
+
+        .hero-section h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .hero-section p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <header class="public-header">
+        <div class="logo">
+            <img src="/static/img/logo.png" alt="CarbonConnect Logo">
+            <h1>CarbonConnect<span>Kenya</span></h1>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" class="nav-link" id="dashboard-link">Dashboard</a>
+            <a href="/explore.html" class="nav-link">Explore Projects</a>
+            <a href="/how-it-works.html" class="nav-link">How It Works</a>
+            <a href="/about.html" class="nav-link active">About Us</a>
+            <a href="/impact.html" class="nav-link">Impact</a>
+        </nav>
+        <div class="auth-buttons">
+            <a href="/submit-project.html" class="submit-project-btn" style="background-color: var(--accent-color); color: white; padding: 0.5rem 1.5rem; border-radius: var(--radius-md); font-weight: 600; text-decoration: none; margin-right: 1rem;">Submit Project</a>
+            <button class="login-btn">Log In</button>
+            <button class="signup-btn">Sign Up</button>
+        </div>
+    </header>
+    
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>Our Mission</h1>
+            <p>Empowering Kenyan farmers to combat climate change while building sustainable livelihoods through innovative carbon credit projects.</p>
+        </div>
+        <div class="hero-slideshow">
+            <div class="hero-slide active">
+                <img src="/static/img/slides/farmer-phone.jpg" alt="Farmer using mobile phone">
+            </div>
+            <div class="hero-slide">
+                <img src="/static/img/slides/carbon-reduction.jpg" alt="Carbon reduction concept">
+            </div>
+            <div class="hero-slide">
+                <img src="/static/img/slides/industrial-emissions.jpg" alt="Industrial emissions">
+            </div>
+        </div>
+    </section>
+    
+    <div class="page-header">
+        <h1>About CarbonConnect Kenya</h1>
+        <p>We're building a more sustainable future by connecting smallholder farmers with carbon markets.</p>
+    </div>
+    
+    <div class="content-container">
+        <div class="about-section">
+            <h2>Our Story</h2>
+            <p>CarbonConnect Kenya launches in 2025 with a simple but powerful vision: to democratize access to carbon markets for smallholder farmers in Kenya while accelerating climate action. We recognize that while Kenya's agricultural sector has enormous potential for carbon sequestration, most smallholder farmers lack the resources, knowledge, and connections to participate in carbon markets.</p>
+            
+            <p>Our platform aims to bridge this gap by leveraging technology, community engagement, and transparent verification processes. We're building a marketplace that will benefit both farmers implementing sustainable practices and individuals or organizations looking to offset their carbon footprint.</p>
+            
+            <div class="mission-vision">
+                <div class="mission">
+                    <h3><i class="fas fa-bullseye"></i> Our Mission</h3>
+                    <p>To empower smallholder farmers in Kenya to implement sustainable agricultural practices, access carbon markets, and improve their livelihoods while contributing to climate change mitigation.</p>
+                </div>
+                
+                <div class="vision">
+                    <h3><i class="fas fa-eye"></i> Our Vision</h3>
+                    <p>A future where sustainable agriculture is the norm, smallholder farmers are financially rewarded for their environmental stewardship, and communities thrive in harmony with nature.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="about-section">
+            <h2>Our Values</h2>
+            <ul>
+                <li><strong>Transparency:</strong> We believe in complete transparency in all our operations, from project verification to carbon credit allocation.</li>
+                <li><strong>Community-Centered:</strong> We prioritize the needs and voices of the communities we work with, ensuring they benefit directly from carbon projects.</li>
+                <li><strong>Environmental Integrity:</strong> We maintain rigorous standards to ensure real, measurable, and permanent carbon sequestration.</li>
+                <li><strong>Innovation:</strong> We continuously explore new technologies and approaches to make carbon markets more accessible and effective.</li>
+                <li><strong>Collaboration:</strong> We aim to work closely with farmers, communities, NGOs, government agencies, and private sector partners to achieve our mission.</li>
+            </ul>
+        </div>
+        
+        <div class="team-section">
+            <h2>Our Team</h2>
+            <p>CarbonConnect Kenya is currently led by our founding engineer, working to build a sustainable future for Kenyan farmers.</p>
+            
+            <div class="team-grid">
+                <div class="team-member">
+                    <div class="member-photo" style="background-image: url('/static/img/team/lead-engineer.jpg');"></div>
+                    <div class="member-info">
+                        <h3>Shayo Victor</h3>
+                        <div class="member-role">Lead Engineer</div>
+                        <p class="member-bio">A passionate technologist committed to leveraging technology for environmental sustainability and agricultural development in Kenya.</p>
+                        <div class="member-social">
+                            <a href="https://www.linkedin.com/in/shayo-victor" target="_blank" title="LinkedIn Profile">
+                                <i class="fab fa-linkedin fa-lg"></i>
+                            </a>
+                            <a href="https://medium.com/@shayo-victor" target="_blank" title="Medium Blog">
+                                <i class="fab fa-medium fa-lg"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cta-section">
+            <h2>Join Our Mission</h2>
+            <p>We're just getting started on our journey to connect smallholder farmers with carbon markets. Whether you're a farmer looking to implement sustainable practices, an investor seeking to offset your carbon footprint, or someone passionate about climate action, we invite you to be part of our growing community.</p>
+            <div class="cta-buttons">
+                <a href="/explore.html" class="cta-primary">Explore Projects</a>
+                <a href="/submit-project.html" class="cta-secondary">Submit Your Project</a>
+            </div>
+        </div>
+        
+        <div class="sdg-section">
+            <h2>Contributing to Sustainable Development Goals</h2>
+            <p>Our work directly contributes to multiple UN Sustainable Development Goals (SDGs):</p>
+            
+            <div class="sdg-grid">
+                <div class="sdg-item">
+                    <img src="https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-01.jpg" alt="SDG 1 - No Poverty">
+                    <p>No Poverty</p>
+                </div>
+                <div class="sdg-item">
+                    <img src="https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-02.jpg" alt="SDG 2 - Zero Hunger">
+                    <p>Zero Hunger</p>
+                </div>
+                <div class="sdg-item">
+                    <img src="https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-08.jpg" alt="SDG 8 - Decent Work and Economic Growth">
+                    <p>Decent Work and Economic Growth</p>
+                </div>
+                <div class="sdg-item">
+                    <img src="https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-13.jpg" alt="SDG 13 - Climate Action">
+                    <p>Climate Action</p>
+                </div>
+                <div class="sdg-item">
+                    <img src="https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-15.jpg" alt="SDG 15 - Life on Land">
+                    <p>Life on Land</p>
+                </div>
+                <div class="sdg-item">
+                    <img src="https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-17.jpg" alt="SDG 17 - Partnerships for the Goals">
+                    <p>Partnerships for the Goals</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="footer-social">
+                <a href="https://www.linkedin.com/in/shayo-victor" target="_blank" title="Follow us on LinkedIn">
+                    <i class="fab fa-linkedin fa-lg"></i>
+                </a>
+                <a href="https://medium.com/@shayo-victor" target="_blank" title="Read our blog on Medium">
+                    <i class="fab fa-medium fa-lg"></i>
+                </a>
+            </div>
+            <p>&copy; 2024 CarbonConnect Kenya | Empowering smallholder farmers in the carbon market</p>
+        </div>
+    </footer>
+    
+    <script>
+        // Handle auth buttons
+        document.querySelector('.login-btn').addEventListener('click', function() {
+            window.location.href = '/login';
+        });
+        
+        document.querySelector('.signup-btn').addEventListener('click', function() {
+            window.location.href = '/register';
+        });
+        
+        // Handle dashboard link click
+        document.getElementById('dashboard-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Check if user is authenticated
+            fetch('/api/user/profile', { credentials: 'include' })
+                .then(response => {
+                    if (!response.ok) {
+                        // User is not authenticated, redirect to login
+                        window.location.href = '/login?redirect=/index.html';
+                    } else {
+                        // User is authenticated, proceed to dashboard
+                        window.location.href = '/index.html';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking authentication:', error);
+                    // Redirect to login on error
+                    window.location.href = '/login?redirect=/index.html';
+                });
+        });
+    </script>
+
+    <script src="/static/js/hero-slideshow.js"></script>
+</body>
+</html>

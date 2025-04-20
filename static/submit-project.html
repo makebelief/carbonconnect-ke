@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Your Project | CarbonConnect Kenya</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css">
+    <style>
+        .public-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-link {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-color);
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .login-btn {
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            background: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .login-btn:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .signup-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .signup-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .page-header {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                        url('/static/img/kenya-landscape.jpg') no-repeat center center;
+            background-size: cover;
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .page-header p {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .submission-container {
+            max-width: 900px;
+            margin: 0 auto 4rem;
+            padding: 0 1.5rem;
+        }
+        
+        .form-section {
+            background-color: white;
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .form-section h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+        
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            flex: 1 1 300px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+        }
+        
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .form-group input[type="file"] {
+            padding: 0.5rem 0;
+            border: none;
+        }
+        
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .preview-item {
+            width: 100px;
+            height: 100px;
+            border-radius: var(--radius-md);
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        .remove-image {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            background-color: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .help-text {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.5rem;
+        }
+        
+        .required::after {
+            content: "*";
+            color: var(--danger-color);
+            margin-left: 0.25rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+        
+        .form-actions button {
+            padding: 0.8rem 2rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+        }
+        
+        .submit-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+        }
+        
+        .submit-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .save-draft-btn {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        
+        .save-draft-btn:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .steps::before {
+            content: "";
+            position: absolute;
+            top: 25px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--border-color);
+            z-index: 1;
+        }
+        
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            width: 25%;
+        }
+        
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .step.active .step-number {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .step.completed .step-number {
+            background-color: var(--success-color);
+            color: white;
+            border-color: var(--success-color);
+        }
+        
+        .step-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header class="public-header">
+        <div class="logo">
+            <img src="/static/img/logo.png" alt="CarbonConnect Logo">
+            <h1>CarbonConnect<span>Kenya</span></h1>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" class="nav-link" id="dashboard-link">Dashboard</a>
+            <a href="/explore.html" class="nav-link">Explore Projects</a>
+            <a href="/submit-project.html" class="nav-link active">Submit Project</a>
+            <a href="/how-it-works.html" class="nav-link">How It Works</a>
+            <a href="/about.html" class="nav-link">About Us</a>
+        </nav>
+        <div class="auth-buttons">
+            <button class="login-btn">Log In</button>
+            <button class="signup-btn">Sign Up</button>
+        </div>
+    </header>
+    
+    <div class="page-header">
+        <h1>Submit Your Carbon Project</h1>
+        <p>Join our community of farmers making a positive impact on the environment while earning carbon credits. Complete the form below to submit your project for review.</p>
+    </div>
+    
+    <div class="submission-container">
+        <div class="steps">
+            <div class="step active">
+                <div class="step-number">1</div>
+                <div class="step-label">Project Details</div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-label">Location & Land</div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-label">Activities & Impact</div>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-label">Review & Submit</div>
+            </div>
+        </div>
+        
+        <form id="project-submission-form">
+            <!-- Step 1: Project Details -->
+            <div class="form-section" id="step-1">
+                <h2>Project Details</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="project-name" class="required">Project Name</label>
+                        <input type="text" id="project-name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-type" class="required">Project Type</label>
+                        <select id="project-type" name="type" required>
+                            <option value="">Select a project type</option>
+                            <option value="agroforestry">Agroforestry</option>
+                            <option value="reforestation">Reforestation</option>
+                            <option value="conservation">Conservation Agriculture</option>
+                            <option value="sustainable_agriculture">Sustainable Agriculture</option>
+                            <option value="soil_management">Soil Carbon Management</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="project-description" class="required">Project Description</label>
+                    <textarea id="project-description" name="description" required placeholder="Describe your project, its goals, and how it will benefit the environment and local community..."></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="project-duration" class="required">Project Duration (years)</label>
+                        <select id="project-duration" name="duration" required>
+                            <option value="">Select duration</option>
+                            <option value="5">5 years</option>
+                            <option value="10">10 years</option>
+                            <option value="15">15 years</option>
+                            <option value="20">20 years</option>
+                            <option value="25">25 years</option>
+                            <option value="30">30 years</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="start-date" class="required">Start Date</label>
+                        <input type="date" id="start-date" name="start_date" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="project-images">Project Images</label>
+                    <input type="file" id="project-images" name="images" multiple accept="image/*">
+                    <p class="help-text">Upload up to 5 images of your project area. Max file size: 5MB each.</p>
+                    <div class="image-preview" id="image-preview"></div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="save-draft-btn">Save as Draft</button>
+                    <button type="button" class="submit-btn" id="next-step-1">Next: Location & Land</button>
+                </div>
+            </div>
+            
+            <!-- Step 2: Location & Land -->
+            <div class="form-section" id="step-2" style="display: none;">
+                <h2>Location & Land Details</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="county" class="required">County</label>
+                        <select id="county" name="county" required>
+                            <option value="">Select county</option>
+                            <option value="nairobi">Nairobi</option>
+                            <option value="kiambu">Kiambu</option>
+                            <option value="nakuru">Nakuru</option>
+                            <option value="mombasa">Mombasa</option>
+                            <option value="kisumu">Kisumu</option>
+                            <!-- Add more counties as needed -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sub-county" class="required">Sub-County</label>
+                        <input type="text" id="sub-county" name="sub_county" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="village" class="required">Village/Town</label>
+                        <input type="text" id="village" name="village" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="land-size" class="required">Land Size (hectares)</label>
+                        <input type="number" id="land-size" name="land_size" min="0.1" step="0.1" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="land-coordinates" class="required">Land Coordinates</label>
+                    <input type="text" id="land-coordinates" name="coordinates" placeholder="Latitude, Longitude" required>
+                    <p class="help-text">You can use the map below to mark your land boundaries or enter coordinates manually.</p>
+                </div>
+                
+                <div id="map" style="height: 300px; border-radius: var(--radius-md); margin-bottom: 1.5rem;"></div>
+                
+                <div class="form-group">
+                    <label for="land-ownership" class="required">Land Ownership Status</label>
+                    <select id="land-ownership" name="ownership_status" required>
+                        <option value="">Select ownership status</option>
+                        <option value="owned">Owned with title deed</option>
+                        <option value="leased">Leased long-term</option>
+                        <option value="community">Community land</option>
+                        <option value="ancestral">Ancestral land</option>
+                        <option value="other">Other (please specify)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="ownership-proof-group">
+                    <label for="ownership-proof" class="required">Proof of Ownership/Rights</label>
+                    <input type="file" id="ownership-proof" name="ownership_proof" accept=".pdf,.jpg,.png">
+                    <p class="help-text">Upload a copy of your title deed, lease agreement, or other documentation proving your rights to the land.</p>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="save-draft-btn" id="back-step-1">Back: Project Details</button>
+                    <button type="button" class="submit-btn" id="next-step-2">Next: Activities & Impact</button>
+                </div>
+            </div>
+            
+            <!-- Step 3: Activities & Impact -->
+            <div class="form-section" id="step-3" style="display: none;">
+                <h2>Activities & Expected Impact</h2>
+                <div class="form-group">
+                    <label for="current-land-use" class="required">Current Land Use</label>
+                    <textarea id="current-land-use" name="current_land_use" required placeholder="Describe how the land is currently being used..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="planned-activities" class="required">Planned Carbon Activities</label>
+                    <textarea id="planned-activities" name="planned_activities" required placeholder="Describe the specific activities you plan to implement for carbon sequestration..."></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tree-species" class="required">Tree Species (if applicable)</label>
+                        <input type="text" id="tree-species" name="tree_species" placeholder="List the tree species you plan to plant">
+                    </div>
+                    <div class="form-group">
+                        <label for="tree-count" class="required">Number of Trees (if applicable)</label>
+                        <input type="number" id="tree-count" name="tree_count" min="0">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="expected-impact" class="required">Expected Environmental Impact</label>
+                    <textarea id="expected-impact" name="expected_impact" required placeholder="Describe the expected environmental benefits of your project..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="community-benefits" class="required">Community Benefits</label>
+                    <textarea id="community-benefits" name="community_benefits" required placeholder="How will your project benefit the local community?"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="previous-experience">Previous Carbon Project Experience</label>
+                    <textarea id="previous-experience" name="previous_experience" placeholder="Describe any previous experience with carbon projects or sustainable farming..."></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="save-draft-btn" id="back-step-2">Back: Location & Land</button>
+                    <button type="button" class="submit-btn" id="next-step-3">Next: Review & Submit</button>
+                </div>
+            </div>
+            
+            <!-- Step 4: Review & Submit -->
+            <div class="form-section" id="step-4" style="display: none;">
+                <h2>Review & Submit</h2>
+                <p>Please review your project information before submitting. Once submitted, our team will review your project and contact you within 5 business days.</p>
+                
+                <div id="project-summary">
+                    <!-- This will be filled dynamically with JavaScript -->
+                </div>
+                
+                <div class="form-group">
+                    <label for="terms-agreement" class="required">
+                        <input type="checkbox" id="terms-agreement" name="terms_agreement" required>
+                        I confirm that all information provided is accurate and I agree to the <a href="#" target="_blank">Terms and Conditions</a> of CarbonConnect Kenya.
+                    </label>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="save-draft-btn" id="back-step-3">Back: Activities & Impact</button>
+                    <button type="submit" class="submit-btn">Submit Project</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <footer class="app-footer">
+        <p>&copy; 2025 CarbonConnect Kenya | Empowering smallholder farmers in the carbon market</p>
+    </footer>
+    
+    <div class="toast" id="toast">
+        <div class="toast-content">
+            <span class="toast-message">Message here</span>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated
+            fetch('/api/user/profile', { credentials: 'include' })
+                .then(response => {
+                    if (!response.ok) {
+                        // User is not authenticated, show message
+                        const submissionContainer = document.querySelector('.submission-container');
+                        submissionContainer.innerHTML = `
+                            <div class="form-section">
+                                <h2>Authentication Required</h2>
+                                <p>You need to be logged in to submit a project. This ensures your project is properly associated with your account and allows you to track its progress.</p>
+                                <div class="form-actions" style="justify-content: center;">
+                                    <a href="/login?redirect=/submit-project.html" class="submit-btn">Log In</a>
+                                    <a href="/register" class="save-draft-btn">Register</a>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.user) {
+                        // User is authenticated, update the form with their information
+                        console.log('User authenticated:', data.user.username);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking authentication:', error);
+                });
+                
+            // Handle dashboard link click
+            document.getElementById('dashboard-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Check if user is authenticated
+                fetch('/api/user/profile', { credentials: 'include' })
+                    .then(response => {
+                        if (!response.ok) {
+                            // User is not authenticated, redirect to login
+                            window.location.href = '/login?redirect=/index.html';
+                        } else {
+                            // User is authenticated, proceed to dashboard
+                            window.location.href = '/index.html';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking authentication:', error);
+                        // Redirect to login on error
+                        window.location.href = '/login?redirect=/index.html';
+                    });
+            });
+            // Initialize map
+            const map = L.map('map').setView([-1.2921, 36.8219], 7); // Kenya centered
+            
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+                maxZoom: 18
+            }).addTo(map);
+            
+            // Handle file uploads and previews
+            const imageInput = document.getElementById('project-images');
+            const imagePreview = document.getElementById('image-preview');
+            
+            imageInput.addEventListener('change', function() {
+                imagePreview.innerHTML = '';
+                
+                if (this.files) {
+                    const maxFiles = 5;
+                    const files = Array.from(this.files).slice(0, maxFiles);
+                    
+                    files.forEach(file => {
+                        const reader = new FileReader();
+                        
+                        reader.onload = function(e) {
+                            const previewItem = document.createElement('div');
+                            previewItem.className = 'preview-item';
+                            previewItem.style.backgroundImage = `url(${e.target.result})`;
+                            
+                            const removeBtn = document.createElement('div');
+                            removeBtn.className = 'remove-image';
+                            removeBtn.innerHTML = '×';
+                            removeBtn.addEventListener('click', function() {
+                                previewItem.remove();
+                            });
+                            
+                            previewItem.appendChild(removeBtn);
+                            imagePreview.appendChild(previewItem);
+                        }
+                        
+                        reader.readAsDataURL(file);
+                    });
+                }
+            });
+            
+            // Multi-step form navigation
+            const steps = [
+                document.getElementById('step-1'),
+                document.getElementById('step-2'),
+                document.getElementById('step-3'),
+                document.getElementById('step-4')
+            ];
+            
+            const stepIndicators = document.querySelectorAll('.step');
+            
+            function showStep(stepIndex) {
+                steps.forEach((step, index) => {
+                    step.style.display = index === stepIndex ? 'block' : 'none';
+                    
+                    if (index < stepIndex) {
+                        stepIndicators[index].classList.add('completed');
+                        stepIndicators[index].classList.remove('active');
+                    } else if (index === stepIndex) {
+                        stepIndicators[index].classList.add('active');
+                        stepIndicators[index].classList.remove('completed');
+                    } else {
+                        stepIndicators[index].classList.remove('active', 'completed');
+                    }
+                });
+                
+                // Scroll to top of the form
+                window.scrollTo({
+                    top: document.querySelector('.steps').offsetTop - 100,
+                    behavior: 'smooth'
+                });
+            }
+            
+            // Next buttons
+            document.getElementById('next-step-1').addEventListener('click', function() {
+                // Validate step 1
+                const projectName = document.getElementById('project-name').value;
+                const projectType = document.getElementById('project-type').value;
+                const projectDescription = document.getElementById('project-description').value;
+                
+                if (!projectName || !projectType || !projectDescription) {
+                    showToast('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                showStep(1);
+            });
+            
+            document.getElementById('next-step-2').addEventListener('click', function() {
+                // Validate step 2
+                const county = document.getElementById('county').value;
+                const landSize = document.getElementById('land-size').value;
+                
+                if (!county || !landSize) {
+                    showToast('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                showStep(2);
+            });
+            
+            document.getElementById('next-step-3').addEventListener('click', function() {
+                // Validate step 3
+                const currentLandUse = document.getElementById('current-land-use').value;
+                const plannedActivities = document.getElementById('planned-activities').value;
+                
+                if (!currentLandUse || !plannedActivities) {
+                    showToast('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                // Generate project summary for review
+                generateProjectSummary();
+                
+                showStep(3);
+            });
+            
+            // Back buttons
+            document.getElementById('back-step-1').addEventListener('click', function() {
+                showStep(0);
+            });
+            
+            document.getElementById('back-step-2').addEventListener('click', function() {
+                showStep(1);
+            });
+            
+            document.getElementById('back-step-3').addEventListener('click', function() {
+                showStep(2);
+            });
+            
+            // Generate project summary
+            function generateProjectSummary() {
+                const summary = document.getElementById('project-summary');
+                
+                const projectName = document.getElementById('project-name').value;
+                const projectType = document.getElementById('project-type').options[document.getElementById('project-type').selectedIndex].text;
+                const county = document.getElementById('county').options[document.getElementById('county').selectedIndex].text;
+                const landSize = document.getElementById('land-size').value;
+                
+                summary.innerHTML = `
+                    <div class="summary-section">
+                        <h3>Project Information</h3>
+                        <p><strong>Name:</strong> ${projectName}</p>
+                        <p><strong>Type:</strong> ${projectType}</p>
+                        <p><strong>Duration:</strong> ${document.getElementById('project-duration').value} years</p>
+                        <p><strong>Start Date:</strong> ${document.getElementById('start-date').value}</p>
+                    </div>
+                    
+                    <div class="summary-section">
+                        <h3>Location Information</h3>
+                        <p><strong>County:</strong> ${county}</p>
+                        <p><strong>Sub-County:</strong> ${document.getElementById('sub-county').value}</p>
+                        <p><strong>Village/Town:</strong> ${document.getElementById('village').value}</p>
+                        <p><strong>Land Size:</strong> ${landSize} hectares</p>
+                    </div>
+                    
+                    <div class="summary-section">
+                        <h3>Activities & Impact</h3>
+                        <p><strong>Current Land Use:</strong> ${document.getElementById('current-land-use').value}</p>
+                        <p><strong>Planned Activities:</strong> ${document.getElementById('planned-activities').value}</p>
+                        <p><strong>Expected Impact:</strong> ${document.getElementById('expected-impact').value}</p>
+                    </div>
+                `;
+            }
+            
+            // Form submission
+            document.getElementById('project-submission-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!document.getElementById('terms-agreement').checked) {
+                    showToast('Please agree to the terms and conditions', 'error');
+                    return;
+                }
+                
+                // In a real app, you would submit the form data to the server here
+                // For now, we'll just show a success message
+                showToast('Project submitted successfully! Our team will review your submission.', 'success');
+                
+                // Redirect to the dashboard after a delay
+                setTimeout(function() {
+                    window.location.href = '/explore.html';
+                }, 3000);
+            });
+            
+            // Toast message
+            function showToast(message, type = 'info') {
+                const toast = document.getElementById('toast');
+                const toastMessage = document.querySelector('.toast-message');
+                
+                toastMessage.textContent = message;
+                toast.className = `toast show ${type}`;
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>

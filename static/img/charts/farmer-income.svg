@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <rect width="400" height="250" fill="#ffffff"/>
+    
+    <!-- Grid -->
+    <g stroke="#e6e6e6" stroke-width="1">
+        <line x1="60" y1="50" x2="340" y2="50"/>
+        <line x1="60" y1="100" x2="340" y2="100"/>
+        <line x1="60" y1="150" x2="340" y2="150"/>
+        <line x1="60" y1="200" x2="340" y2="200"/>
+    </g>
+    
+    <!-- Axes -->
+    <line x1="60" y1="200" x2="340" y2="200" stroke="#333" stroke-width="2"/>
+    <line x1="60" y1="50" x2="60" y2="200" stroke="#333" stroke-width="2"/>
+    
+    <!-- Current Income Bars -->
+    <g fill="#3498db">
+        <rect x="100" y="150" width="30" height="50"/>
+        <rect x="180" y="160" width="30" height="40"/>
+        <rect x="260" y="170" width="30" height="30"/>
+    </g>
+    
+    <!-- With CarbonConnect Bars -->
+    <g fill="#2ecc71">
+        <rect x="135" y="100" width="30" height="100"/>
+        <rect x="215" y="120" width="30" height="80"/>
+        <rect x="295" y="130" width="30" height="70"/>
+    </g>
+    
+    <!-- Labels -->
+    <g font-family="Arial" font-size="11" text-anchor="middle">
+        <text x="132" y="220">Crops</text>
+        <text x="212" y="220">Livestock</text>
+        <text x="292" y="220">Other</text>
+    </g>
+    
+    <!-- Legend -->
+    <g transform="translate(250, 30)">
+        <rect x="0" y="0" width="15" height="15" fill="#3498db"/>
+        <text x="25" y="12" font-family="Arial" font-size="11">Current</text>
+        
+        <rect x="0" y="25" width="15" height="15" fill="#2ecc71"/>
+        <text x="25" y="37" font-family="Arial" font-size="11">With CarbonConnect</text>
+    </g>
+</svg> 

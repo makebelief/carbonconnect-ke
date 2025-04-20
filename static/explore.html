@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Projects | CarbonConnect Kenya</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .hero-section {
+            position: relative;
+            background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75));
+            color: white;
+            padding: 6rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .hero-slideshow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .hero-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .hero-slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 1;
+        }
+
+        .hero-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: relative;
+        }
+
+        .hero-slide.active {
+            opacity: 1;
+        }
+
+        .hero-section h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .hero-section p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .search-bar {
+            display: flex;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+        
+        .search-bar input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border: none;
+            border-radius: var(--radius-md) 0 0 var(--radius-md);
+            font-size: 1rem;
+        }
+        
+        .search-bar button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0 1.5rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            cursor: pointer;
+        }
+        
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        
+        .filter-pill {
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-pill:hover, .filter-pill.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 0 1rem;
+        }
+        
+        .project-card {
+            background-color: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .project-image {
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        .project-type {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .project-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background-color: rgba(0,0,0,0.2);
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--accent-color);
+        }
+        
+        .project-content {
+            padding: 1.5rem;
+        }
+        
+        .project-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+        
+        .project-location {
+            display: flex;
+            align-items: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .project-location i {
+            margin-right: 0.5rem;
+        }
+        
+        .project-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .stat-value {
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+        
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.8rem;
+        }
+        
+        .project-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }
+        
+        .farmer-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .farmer-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .farmer-name {
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+        
+        .invest-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .invest-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .public-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-link {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary-color);
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .login-btn {
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            background: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .login-btn:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .signup-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .signup-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .impact-stats {
+            display: flex;
+            justify-content: space-around;
+            background-color: var(--primary-light);
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        
+        .impact-stat {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 200px;
+            padding: 0 1rem;
+        }
+        
+        .impact-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .impact-label {
+            color: var(--text-color);
+            font-size: 0.95rem;
+            line-height: 1.3;
+            max-width: 150px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .impact-stat {
+                min-width: 150px;
+            }
+            
+            .impact-value {
+                font-size: 2rem;
+            }
+            
+            .impact-label {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Icon styling for impact cards */
+        .impact-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Slideshow styles */
+        .slideshow-container {
+            display: none;
+        }
+
+        .slide {
+            display: none;
+            text-align: center;
+        }
+
+        .slide.active {
+            display: block;
+            animation: fade 1.5s ease-in-out;
+        }
+
+        .slide img {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+        }
+
+        .slide-caption {
+            display: none; /* Hide captions in hero section */
+        }
+
+        @keyframes fade {
+            from {opacity: 0.4}
+            to {opacity: 1}
+        }
+
+        .slide-nav {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .slide-dot {
+            height: 12px;
+            width: 12px;
+            margin: 0 4px;
+            background-color: #bbb;
+            border-radius: 50%;
+            display: inline-block;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .slide-dot.active {
+            background-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <header class="public-header">
+        <div class="logo">
+            <img src="/static/img/logo.png" alt="CarbonConnect Logo">
+            <h1>CarbonConnect<span>Kenya</span></h1>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" class="nav-link" id="dashboard-link">Dashboard</a>
+            <a href="/explore.html" class="nav-link active">Explore Projects</a>
+            <a href="/how-it-works.html" class="nav-link">How It Works</a>
+            <a href="/about.html" class="nav-link">About Us</a>
+            <a href="/impact.html" class="nav-link">Impact</a>
+        </nav>
+        <div class="auth-buttons">
+            <a href="/submit-project.html" class="submit-project-btn" style="background-color: var(--accent-color); color: white; padding: 0.5rem 1.5rem; border-radius: var(--radius-md); font-weight: 600; text-decoration: none; margin-right: 1rem;">Submit Project</a>
+            <button class="login-btn">Log In</button>
+            <button class="signup-btn">Sign Up</button>
+        </div>
+    </header>
+
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>Invest in Kenya's Sustainable Future</h1>
+            <p>Support local farmers implementing carbon offset projects and make a real impact on climate change while earning carbon credits.</p>
+            <div class="search-bar">
+                <input type="text" placeholder="Search for projects...">
+                <button><i class="fas fa-search"></i></button>
+            </div>
+            <div class="filters">
+                <div class="filter-pill active">All Projects</div>
+                <div class="filter-pill">Tree Planting</div>
+                <div class="filter-pill">Biogas</div>
+                <div class="filter-pill">Conservation</div>
+                <div class="filter-pill">Agroforestry</div>
+                <div class="filter-pill">Newest</div>
+                <div class="filter-pill">Most Funded</div>
+            </div>
+        </div>
+        <div class="hero-slideshow">
+            <div class="hero-slide active">
+                <img src="/static/img/slides/farmer-phone.jpg" alt="Kenyan farmer using mobile phone">
+            </div>
+            <div class="hero-slide">
+                <img src="/static/img/slides/carbon-reduction.jpg" alt="Carbon reduction concept">
+            </div>
+            <div class="hero-slide">
+                <img src="/static/img/slides/industrial-emissions.jpg" alt="Industrial emissions">
+            </div>
+        </div>
+        <div class="slide-nav">
+            <span class="slide-dot active" data-slide="0"></span>
+            <span class="slide-dot" data-slide="1"></span>
+            <span class="slide-dot" data-slide="2"></span>
+        </div>
+    </section>
+
+    <section class="impact-stats">
+        <div class="impact-stat">
+            <div class="impact-icon"><i class="fas fa-project-diagram"></i></div>
+            <div class="impact-value">125+</div>
+            <div class="impact-label">Projected Active Projects</div>
+        </div>
+        <div class="impact-stat">
+            <div class="impact-icon"><i class="fas fa-user-friends"></i></div>
+            <div class="impact-value">1,250</div>
+            <div class="impact-label">Projected Farmers to Support</div>
+        </div>
+        <div class="impact-stat">
+            <div class="impact-icon"><i class="fas fa-leaf"></i></div>
+            <div class="impact-value">45,000</div>
+            <div class="impact-label">Projected Trees to Plant</div>
+        </div>
+        <div class="impact-stat">
+            <div class="impact-icon"><i class="fas fa-coins"></i></div>
+            <div class="impact-value">12,500</div>
+            <div class="impact-label">Projected Carbon Credits</div>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="projects-grid" id="projects-container">
+            <!-- Projects will be loaded here -->
+        </div>
+    </div>
+
+    <footer class="app-footer">
+        <p>&copy; 2025 CarbonConnect Kenya | Empowering smallholder farmers in the carbon market</p>
+    </footer>
+
+    <script>
+        // Sample project data
+        const projects = [
+            {
+                id: 1,
+                title: "Meru Tree Planting Initiative",
+                type: "Tree Planting",
+                location: "Meru County, Kenya",
+                image: "https://images.unsplash.com/photo-1513028738826-f000cded30a4",
+                progress: 75,
+                stats: {
+                    credits: 250,
+                    investors: 45,
+                    days: 30
+                },
+                farmer: {
+                    name: "John Mwangi",
+                    avatar: "https://randomuser.me/api/portraits/men/32.jpg"
+                }
+            },
+            {
+                id: 2,
+                title: "Kisumu Biogas Project",
+                type: "Biogas",
+                location: "Kisumu County, Kenya",
+                image: "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9",
+                progress: 45,
+                stats: {
+                    credits: 180,
+                    investors: 32,
+                    days: 45
+                },
+                farmer: {
+                    name: "Sarah Otieno",
+                    avatar: "https://randomuser.me/api/portraits/women/44.jpg"
+                }
+            },
+            {
+                id: 3,
+                title: "Nairobi Urban Forestry",
+                type: "Conservation",
+                location: "Nairobi County, Kenya",
+                image: "https://images.unsplash.com/photo-1572204292164-b35ba943fca7",
+                progress: 90,
+                stats: {
+                    credits: 320,
+                    investors: 78,
+                    days: 15
+                },
+                farmer: {
+                    name: "David Kamau",
+                    avatar: "https://randomuser.me/api/portraits/men/22.jpg"
+                }
+            },
+            {
+                id: 4,
+                title: "Kakamega Forest Protection",
+                type: "Conservation",
+                location: "Kakamega County, Kenya",
+                image: "https://images.unsplash.com/photo-1542401886-65d6c61db217",
+                progress: 60,
+                stats: {
+                    credits: 420,
+                    investors: 56,
+                    days: 25
+                },
+                farmer: {
+                    name: "Mary Wanjiku",
+                    avatar: "https://randomuser.me/api/portraits/women/67.jpg"
+                }
+            },
+            {
+                id: 5,
+                title: "Machakos Agroforestry Initiative",
+                type: "Agroforestry",
+                location: "Machakos County, Kenya",
+                image: "https://images.unsplash.com/photo-1500651230702-0e2d8a49d4ad",
+                progress: 30,
+                stats: {
+                    credits: 150,
+                    investors: 28,
+                    days: 60
+                },
+                farmer: {
+                    name: "Peter Mutua",
+                    avatar: "https://randomuser.me/api/portraits/men/55.jpg"
+                }
+            },
+            {
+                id: 6,
+                title: "Nakuru Sustainable Farming",
+                type: "Agroforestry",
+                location: "Nakuru County, Kenya",
+                image: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449",
+                progress: 85,
+                stats: {
+                    credits: 280,
+                    investors: 62,
+                    days: 10
+                },
+                farmer: {
+                    name: "Jane Njeri",
+                    avatar: "https://randomuser.me/api/portraits/women/22.jpg"
+                }
+            }
+        ];
+
+        // Render projects
+        function renderProjects(projectsToRender) {
+            const projectsContainer = document.getElementById('projects-container');
+            projectsContainer.innerHTML = '';
+            
+            projectsToRender.forEach(project => {
+                const projectCard = document.createElement('div');
+                projectCard.className = 'project-card';
+                projectCard.innerHTML = `
+                    <div class="project-image" style="background-image: url(${project.image})">
+                        <div class="project-type">${project.type}</div>
+                        <div class="project-progress">
+                            <div class="progress-bar" style="width: ${project.progress}%"></div>
+                        </div>
+                    </div>
+                    <div class="project-content">
+                        <h3 class="project-title">${project.title}</h3>
+                        <div class="project-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${project.location}</span>
+                        </div>
+                        <div class="project-stats">
+                            <div class="stat">
+                                <div class="stat-value">${project.stats.credits}</div>
+                                <div class="stat-label">Credits</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">${project.stats.investors}</div>
+                                <div class="stat-label">Investors</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">${project.stats.days}</div>
+                                <div class="stat-label">Days Left</div>
+                            </div>
+                        </div>
+                        <div class="project-footer">
+                            <div class="farmer-info">
+                                <div class="farmer-avatar" style="background-image: url(${project.farmer.avatar})"></div>
+                                <div class="farmer-name">${project.farmer.name}</div>
+                            </div>
+                            <button class="invest-btn" onclick="showProjectDetails(${project.id})">Invest Now</button>
+                        </div>
+                    </div>
+                `;
+                projectsContainer.appendChild(projectCard);
+            });
+        }
+
+        // Filter projects
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle login and signup buttons
+            document.querySelector('.login-btn').addEventListener('click', function() {
+                window.location.href = '/login';
+            });
+            
+            document.querySelector('.signup-btn').addEventListener('click', function() {
+                window.location.href = '/register';
+            });
+            // Filter projects
+            document.querySelectorAll('.filter-pill').forEach(pill => {
+                pill.addEventListener('click', function() {
+                    // Remove active class from all pills
+                    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+                    
+                    // Add active class to clicked pill
+                    this.classList.add('active');
+                    
+                    const filter = this.textContent;
+                    
+                    if (filter === 'All Projects') {
+                        renderProjects(projects);
+                    } else if (filter === 'Newest') {
+                        renderProjects([...projects].sort((a, b) => b.id - a.id));
+                    } else if (filter === 'Most Funded') {
+                        renderProjects([...projects].sort((a, b) => b.progress - a.progress));
+                    } else {
+                        // Filter by project type
+                        renderProjects(projects.filter(project => project.type === filter));
+                    }
+                });
+            });
+
+            // Handle dashboard link click
+            document.getElementById('dashboard-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Check if user is authenticated
+                fetch('/api/user/profile', { credentials: 'include' })
+                    .then(response => {
+                        if (!response.ok) {
+                            // User is not authenticated, redirect to login
+                            window.location.href = '/login?redirect=/index.html';
+                        } else {
+                            // User is authenticated, proceed to dashboard
+                            window.location.href = '/index.html';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking authentication:', error);
+                        // Redirect to login on error
+                        window.location.href = '/login?redirect=/index.html';
+                    });
+            });
+
+            // Initialize
+            let currentSlide = 0;
+            const slides = document.querySelectorAll('.hero-slide');
+            const dots = document.querySelectorAll('.slide-dot');
+            const slideCount = slides.length;
+
+            function showSlide(n) {
+                // Remove active class from all slides and dots
+                slides.forEach(slide => slide.classList.remove('active'));
+                dots.forEach(dot => dot.classList.remove('active'));
+                
+                // Show the current slide and dot
+                slides[n].classList.add('active');
+                dots[n].classList.add('active');
+                
+                currentSlide = n;
+            }
+
+            function nextSlide() {
+                showSlide((currentSlide + 1) % slideCount);
+            }
+
+            // Add click handlers to dots
+            dots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    const slideIndex = parseInt(dot.getAttribute('data-slide'));
+                    showSlide(slideIndex);
+                });
+            });
+
+            // Auto advance slides every 5 seconds
+            setInterval(nextSlide, 5000);
+
+            // Initialize projects
+            renderProjects(projects);
+        });
+
+        // Search functionality
+        const searchInput = document.querySelector('.search-bar input');
+        const searchButton = document.querySelector('.search-bar button');
+        
+        function performSearch() {
+            const searchTerm = searchInput.value.toLowerCase();
+            if (searchTerm) {
+                const filteredProjects = projects.filter(project => 
+                    project.title.toLowerCase().includes(searchTerm) || 
+                    project.location.toLowerCase().includes(searchTerm) ||
+                    project.type.toLowerCase().includes(searchTerm)
+                );
+                renderProjects(filteredProjects);
+            } else {
+                renderProjects(projects);
+            }
+        }
+        
+        searchButton.addEventListener('click', performSearch);
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // Show project details
+        function showProjectDetails(projectId) {
+            // Navigate to the project details page
+            window.location.href = `/project-details.html?id=${projectId}`;
+        }
+
+        // Auth buttons
+        document.querySelector('.login-btn').addEventListener('click', function() {
+            window.location.href = '/login';
+        });
+        
+        document.querySelector('.signup-btn').addEventListener('click', function() {
+            window.location.href = '/register';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How It Works | CarbonConnect Kenya</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .public-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-link {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-color);
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .login-btn {
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            background: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .login-btn:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .signup-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .signup-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .page-header {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                        url('/static/img/kenya-landscape.jpg') no-repeat center center;
+            background-size: cover;
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .page-header p {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .content-container {
+            max-width: 1000px;
+            margin: 0 auto 4rem;
+            padding: 0 1.5rem;
+        }
+        
+        .step-container {
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+        
+        .step {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .step:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+        
+        .step-image {
+            flex: 1;
+            min-width: 300px;
+            height: 250px;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            background-color: white;
+            padding: 2rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .step-image:hover {
+            transform: scale(1.05);
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .step h2 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        
+        .step p {
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .cta-section {
+            background-color: var(--bg-light);
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-top: 3rem;
+            border-radius: var(--radius-lg);
+        }
+        
+        .cta-section h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .cta-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        
+        .cta-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .cta-secondary {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 0.8rem 2rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .cta-secondary:hover {
+            background-color: var(--primary-light);
+        }
+        
+        @media (max-width: 768px) {
+            .step {
+                flex-direction: column !important;
+            }
+            
+            .step-image {
+                width: 100%;
+                min-width: 100%;
+            }
+        }
+
+        .hero-section {
+            position: relative;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6));
+            color: white;
+            padding: 6rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-slideshow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .hero-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .hero-slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 1;
+        }
+
+        .hero-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: relative;
+        }
+
+        .hero-slide.active {
+            opacity: 1;
+        }
+
+        .hero-section h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .hero-section p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <header class="public-header">
+        <div class="logo">
+            <img src="/static/img/logo.png" alt="CarbonConnect Logo">
+            <h1>CarbonConnect<span>Kenya</span></h1>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" class="nav-link">Dashboard</a>
+            <a href="/explore.html" class="nav-link">Explore Projects</a>
+            <a href="/how-it-works.html" class="nav-link active">How It Works</a>
+            <a href="/about.html" class="nav-link">About Us</a>
+            <a href="/impact.html" class="nav-link">Impact</a>
+        </nav>
+        <div class="auth-buttons">
+            <button class="login-btn">Log In</button>
+            <button class="signup-btn">Sign Up</button>
+        </div>
+    </header>
+
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>How CarbonConnect Works</h1>
+            <p>Learn how we connect farmers with carbon markets and help them earn from sustainable practices.</p>
+        </div>
+        <div class="hero-slideshow">
+            <div class="hero-slide active">
+                <img src="/static/img/slides/carbon-reduction.jpg" alt="Carbon reduction concept">
+            </div>
+            <div class="hero-slide">
+                <img src="/static/img/slides/farmer-phone.jpg" alt="Farmer using mobile phone">
+            </div>
+            <div class="hero-slide">
+                <img src="/static/img/slides/industrial-emissions.jpg" alt="Industrial emissions">
+            </div>
+        </div>
+    </section>
+    
+    <div class="page-header">
+        <h1>How CarbonConnect Kenya Works</h1>
+        <p>Our platform connects farmers implementing sustainable practices with investors looking to support environmental projects and offset their carbon footprint.</p>
+    </div>
+    
+    <div class="content-container">
+        <div class="step-container">
+            <div class="step">
+                <div class="step-image" style="background-image: url('https://img.freepik.com/free-vector/organic-flat-farming-profession-illustration_23-2148899111.jpg?w=740&t=st=1709995049~exp=1709995649~hmac=d9b5ca71d3606c1c14c3e4b3e7d4100f9b44a3d8f2c335d21e2b0ad563d0f5f9');"></div>
+                <div class="step-content">
+                    <div class="step-number">1</div>
+                    <h2>Farmers Submit Projects</h2>
+                    <p>Farmers and project owners register on our platform and submit their carbon offset projects. These can include agroforestry, reforestation, conservation agriculture, sustainable farming, and soil carbon management initiatives.</p>
+                    <p>Each project undergoes a thorough review process to ensure it meets our standards for environmental impact and sustainability.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-image" style="background-image: url('https://img.freepik.com/free-vector/audit-concept-illustration_114360-6569.jpg?w=740&t=st=1709995157~exp=1709995757~hmac=8e66a7f5b14b6b4b6b2f3d8b7f6d4c0f0b4f4c4d4e4f4g4h4i4j4k4l4m4n4o4p');"></div>
+                <div class="step-content">
+                    <div class="step-number">2</div>
+                    <h2>Verification and Approval</h2>
+                    <p>Our team of experts and third-party verifiers assess each project to validate its carbon sequestration potential and environmental benefits. This ensures transparency and credibility for investors.</p>
+                    <p>Projects that meet our criteria are approved and listed on our platform, ready for investment.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-image" style="background-image: url('https://img.freepik.com/free-vector/investment-data-concept-illustration_114360-5159.jpg?w=740&t=st=1709995201~exp=1709995801~hmac=7d8b9c6d5e4f3g2h1i0j9k8l7m6n5o4p3q2r1s0t9u8v7w6x5y4z3a2b1c');"></div>
+                <div class="step-content">
+                    <div class="step-number">3</div>
+                    <h2>Investors Support Projects</h2>
+                    <p>Individuals and organizations browse our marketplace of verified projects and choose those that align with their values and carbon offset goals. Investors can contribute any amount, from small individual investments to large corporate commitments.</p>
+                    <p>Each investment directly supports farmers implementing sustainable practices and generates carbon credits.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-image" style="background-image: url('https://img.freepik.com/free-vector/data-analysis-illustration-flat-style-design_159242-23.jpg?w=740&t=st=1709995249~exp=1709995849~hmac=9e8d7c6f5e4d3b2a1c0f9e8d7c6f5e4d3b2a1c0f9e8d7c6f5e4d3b2a1c0f9e8');"></div>
+                <div class="step-content">
+                    <div class="step-number">4</div>
+                    <h2>Monitoring and Reporting</h2>
+                    <p>Farmers document their activities and progress through our platform, providing regular updates with photos and data. Our verification team conducts periodic site visits to ensure projects are implemented as planned.</p>
+                    <p>Investors receive transparent reports on the impact of their investments, including carbon sequestered, trees planted, and community benefits.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-image" style="background-image: url('https://img.freepik.com/free-vector/carbon-dioxide-concept-illustration_114360-8466.jpg?w=740&t=st=1709995293~exp=1709995893~hmac=2b1a0c9d8e7f6g5h4i3j2k1l0m9n8o7p6q5r4s3t2u1v0w9x8y7z6a5b4c3');"></div>
+                <div class="step-content">
+                    <div class="step-number">5</div>
+                    <h2>Carbon Credits Generated</h2>
+                    <p>As projects sequester carbon through sustainable practices, carbon credits are generated and allocated to investors proportional to their investment. These credits can be used to offset carbon footprints or traded on carbon markets.</p>
+                    <p>Our platform ensures that the environmental and social benefits are quantified and verified according to international standards.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cta-section">
+            <h2>Ready to Make a Difference?</h2>
+            <p>Join our community of farmers and investors working together to combat climate change while supporting sustainable livelihoods in Kenya.</p>
+            <div class="cta-buttons">
+                <a href="/explore.html" class="cta-primary">Explore Projects</a>
+                <a href="/submit-project.html" class="cta-secondary">Submit Your Project</a>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="app-footer">
+        <p>&copy; 2025 CarbonConnect Kenya | Empowering smallholder farmers in the carbon market</p>
+    </footer>
+    
+    <script>
+        // Handle auth buttons
+        document.querySelector('.login-btn').addEventListener('click', function() {
+            window.location.href = '/login';
+        });
+        
+        document.querySelector('.signup-btn').addEventListener('click', function() {
+            window.location.href = '/register';
+        });
+        
+        // Handle dashboard link click
+        document.getElementById('dashboard-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Check if user is authenticated
+            fetch('/api/user/profile', { credentials: 'include' })
+                .then(response => {
+                    if (!response.ok) {
+                        // User is not authenticated, redirect to login
+                        window.location.href = '/login?redirect=/index.html';
+                    } else {
+                        // User is authenticated, proceed to dashboard
+                        window.location.href = '/index.html';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking authentication:', error);
+                    // Redirect to login on error
+                    window.location.href = '/login?redirect=/index.html';
+                });
+        });
+    </script>
+
+    <script src="/static/js/hero-slideshow.js"></script>
+</body>
+</html>

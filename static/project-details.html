@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Details | CarbonConnect Kenya</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .public-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-link {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary-color);
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .login-btn {
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            background: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .login-btn:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .signup-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .signup-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .project-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                        url('https://images.unsplash.com/photo-1513028738826-f000cded30a4') no-repeat center center;
+            background-size: cover;
+            color: white;
+            text-align: center;
+        }
+        
+        .project-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: white;
+        }
+        
+        .project-meta {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .meta-item i {
+            margin-right: 0.5rem;
+        }
+        
+        .project-progress-container {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 1rem;
+        }
+        
+        .project-progress {
+            height: 10px;
+            background-color: rgba(255,255,255,0.3);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--accent-color);
+            width: 75%;
+        }
+        
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .project-details {
+            background-color: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+        
+        .tab-navigation {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .tab {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-light);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .tab-content {
+            padding: 2rem;
+        }
+        
+        .tab-pane {
+            display: none;
+        }
+        
+        .tab-pane.active {
+            display: block;
+        }
+        
+        .project-description {
+            line-height: 1.6;
+            color: var(--text-color);
+            margin-bottom: 2rem;
+        }
+        
+        .project-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .gallery-image {
+            height: 150px;
+            border-radius: var(--radius-md);
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .gallery-image:hover {
+            transform: scale(1.05);
+        }
+        
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .activity-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: var(--bg-light);
+            border-radius: var(--radius-md);
+        }
+        
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .activity-content {
+            flex: 1;
+        }
+        
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        
+        .activity-date {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        
+        .comments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .comment {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .comment-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            flex-shrink: 0;
+        }
+        
+        .comment-content {
+            flex: 1;
+        }
+        
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .comment-author {
+            font-weight: 600;
+        }
+        
+        .comment-date {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        
+        .comment-text {
+            line-height: 1.5;
+            color: var(--text-color);
+        }
+        
+        .comment-form {
+            margin-top: 2rem;
+        }
+        
+        .comment-form textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            resize: vertical;
+            min-height: 100px;
+            margin-bottom: 1rem;
+        }
+        
+        .submit-comment {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .submit-comment:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .investment-sidebar {
+            position: sticky;
+            top: 2rem;
+            align-self: start;
+        }
+        
+        .investment-card {
+            background-color: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+        }
+        
+        .investment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .investment-option {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .investment-option:hover, .investment-option.selected {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+        }
+        
+        .option-radio {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            margin-right: 1rem;
+            position: relative;
+        }
+        
+        .investment-option.selected .option-radio {
+            border-color: var(--primary-color);
+        }
+        
+        .investment-option.selected .option-radio::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .option-details {
+            flex: 1;
+        }
+        
+        .option-amount {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        .option-credits {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        
+        .custom-amount {
+            margin-top: 1rem;
+        }
+        
+        .custom-amount input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+        }
+        
+        .invest-button {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .invest-button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .farmer-card {
+            background-color: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .farmer-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .farmer-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+        
+        .farmer-location {
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+        
+        .farmer-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 1.5rem;
+        }
+        
+        .farmer-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .stat-value {
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        
+        .contact-farmer {
+            background-color: var(--bg-light);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 0.8rem;
+            width: 100%;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .contact-farmer:hover {
+            background-color: var(--primary-light);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <header class="public-header">
+        <div class="logo">
+            <img src="/static/img/logo.png" alt="CarbonConnect Logo">
+            <h1>CarbonConnect<span>Kenya</span></h1>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" class="nav-link" id="dashboard-link">Dashboard</a>
+            <a href="/explore.html" class="nav-link">Explore Projects</a>
+            <a href="/how-it-works.html" class="nav-link">How It Works</a>
+            <a href="/about.html" class="nav-link">About Us</a>
+            <a href="/impact.html" class="nav-link">Impact</a>
+        </nav>
+        <div class="auth-buttons">
+            <a href="/submit-project.html" class="submit-project-btn" style="background-color: var(--accent-color); color: white; padding: 0.5rem 1.5rem; border-radius: var(--radius-md); font-weight: 600; text-decoration: none; margin-right: 1rem;">Submit Project</a>
+            <button class="login-btn">Log In</button>
+            <button class="signup-btn">Sign Up</button>
+        </div>
+    </header>
+
+    <section class="project-header" id="project-header">
+        <h1 class="project-title">Meru Tree Planting Initiative</h1>
+        <div class="project-meta">
+            <div class="meta-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Meru County, Kenya</span>
+            </div>
+            <div class="meta-item">
+                <i class="fas fa-leaf"></i>
+                <span>Tree Planting</span>
+            </div>
+            <div class="meta-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Started: January 2025</span>
+            </div>
+        </div>
+        <div class="project-progress-container">
+            <div class="project-progress">
+                <div class="progress-bar"></div>
+            </div>
+            <div class="progress-stats">
+                <div>$15,000 raised of $20,000 goal</div>
+                <div>75% funded</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="main-content">
+        <div class="project-details">
+            <div class="tab-navigation">
+                <div class="tab active" data-tab="overview">Overview</div>
+                <div class="tab" data-tab="activities">Activities</div>
+                <div class="tab" data-tab="discussion">Discussion</div>
+                <div class="tab" data-tab="investors">Investors</div>
+            </div>
+            <div class="tab-content">
+                <div class="tab-pane active" id="overview">
+                    <div class="project-description">
+                        <p>The Meru Tree Planting Initiative aims to combat deforestation and soil erosion in Meru County by planting 10,000 indigenous trees across 50 hectares of degraded land. This community-led project engages local farmers in sustainable agroforestry practices that will sequester carbon while providing additional income through carbon credits.</p>
+                        <p>The project focuses on native tree species that are well-adapted to the local climate and provide multiple benefits to the ecosystem. These trees will help restore wildlife habitats, improve soil fertility, and enhance water retention in the area.</p>
+                        <p>By investing in this project, you're not only offsetting your carbon footprint but also supporting local livelihoods and biodiversity conservation in Kenya.</p>
+                    </div>
+                    <h3>Project Gallery</h3>
+                    <div class="project-gallery">
+                        <div class="gallery-image" style="background-image: url('https://images.unsplash.com/photo-1513028738826-f000cded30a4')"></div>
+                        <div class="gallery-image" style="background-image: url('https://images.unsplash.com/photo-1591594016113-5c10f95fb14c')"></div>
+                        <div class="gallery-image" style="background-image: url('https://images.unsplash.com/photo-1569880153113-76e33fc52d5f')"></div>
+                        <div class="gallery-image" style="background-image: url('https://images.unsplash.com/photo-1617500603321-aa2be4991be1')"></div>
+                    </div>
+                    <h3>Expected Impact</h3>
+                    <ul>
+                        <li>Sequester approximately 5,000 tons of CO2 over 10 years</li>
+                        <li>Restore 50 hectares of degraded land</li>
+                        <li>Support livelihoods of 25 local farming families</li>
+                        <li>Improve soil fertility and reduce erosion</li>
+                        <li>Enhance biodiversity and wildlife habitat</li>
+                    </ul>
+                </div>
+                <div class="tab-pane" id="activities">
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-seedling"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Planted 500 Acacia trees in Eastern sector</div>
+                                <div class="activity-date">April 15, 2025</div>
+                                <p>The team successfully planted 500 Acacia trees in the eastern sector of the project area. Soil conditions were favorable and all seedlings were planted with proper spacing and protection.</p>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Installed irrigation system for nursery</div>
+                                <div class="activity-date">April 10, 2025</div>
+                                <p>Completed the installation of a drip irrigation system for the tree nursery. This will ensure consistent water supply to seedlings during the dry season and improve survival rates.</p>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Community training on tree care</div>
+                                <div class="activity-date">April 5, 2025</div>
+                                <p>Conducted a training session for 15 community members on proper tree care techniques, including pruning, mulching, and pest management. All participants received certificates and tool kits.</p>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-map-marked-alt"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Site mapping and soil analysis completed</div>
+                                <div class="activity-date">March 28, 2025</div>
+                                <p>Completed comprehensive mapping of the project site and conducted soil analysis across different sectors. Results show varying soil conditions that will inform species selection for different areas.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="discussion">
+                    <div class="comments-list">
+                        <div class="comment">
+                            <div class="comment-avatar" style="background-image: url('https://randomuser.me/api/portraits/women/33.jpg')"></div>
+                            <div class="comment-content">
+                                <div class="comment-header">
+                                    <div class="comment-author">Emily Johnson</div>
+                                    <div class="comment-date">April 16, 2025</div>
+                                </div>
+                                <div class="comment-text">
+                                    <p>I visited this project last week and was amazed by the progress. The community's enthusiasm is contagious, and it's clear that this initiative is making a real difference in the area.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="comment">
+                            <div class="comment-avatar" style="background-image: url('https://randomuser.me/api/portraits/men/45.jpg')"></div>
+                            <div class="comment-content">
+                                <div class="comment-header">
+                                    <div class="comment-author">Michael Chen</div>
+                                    <div class="comment-date">April 12, 2025</div>
+                                </div>
+                                <div class="comment-text">
+                                    <p>I'm curious about the long-term maintenance plan for these trees. Will there be ongoing monitoring after the initial planting phase?</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="comment">
+                            <div class="comment-avatar" style="background-image: url('https://randomuser.me/api/portraits/men/32.jpg')"></div>
+                            <div class="comment-content">
+                                <div class="comment-header">
+                                    <div class="comment-author">John Mwangi (Project Lead)</div>
+                                    <div class="comment-date">April 13, 2025</div>
+                                </div>
+                                <div class="comment-text">
+                                    <p>@Michael - Yes, we have a 5-year maintenance plan in place. Community members are trained and compensated for ongoing care, and we conduct quarterly monitoring visits. We're also establishing a tree nursery that will provide seedlings for replacement if needed.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="comment-form">
+                        <textarea placeholder="Join the discussion..."></textarea>
+                        <button class="submit-comment">Post Comment</button>
+                    </div>
+                </div>
+                <div class="tab-pane" id="investors">
+                    <p>This project has 45 investors who have contributed to its success:</p>
+                    <div class="investors-list">
+                        <!-- Investor list would go here -->
+                        <p>Feature coming soon...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="investment-sidebar">
+            <div class="investment-card">
+                <h3 class="card-title">Invest in this Project</h3>
+                <div class="investment-options">
+                    <div class="investment-option">
+                        <div class="option-radio"></div>
+                        <div class="option-details">
+                            <div class="option-amount">$50</div>
+                            <div class="option-credits">Earn 5 carbon credits</div>
+                        </div>
+                    </div>
+                    <div class="investment-option selected">
+                        <div class="option-radio"></div>
+                        <div class="option-details">
+                            <div class="option-amount">$100</div>
+                            <div class="option-credits">Earn 10 carbon credits</div>
+                        </div>
+                    </div>
+                    <div class="investment-option">
+                        <div class="option-radio"></div>
+                        <div class="option-details">
+                            <div class="option-amount">$250</div>
+                            <div class="option-credits">Earn 25 carbon credits</div>
+                        </div>
+                    </div>
+                    <div class="investment-option">
+                        <div class="option-radio"></div>
+                        <div class="option-details">
+                            <div class="option-amount">$500</div>
+                            <div class="option-credits">Earn 50 carbon credits</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="custom-amount">
+                    <input type="number" placeholder="Or enter custom amount ($)">
+                </div>
+                <button class="invest-button">Invest Now</button>
+            </div>
+            <div class="farmer-card">
+                <div class="farmer-avatar" style="background-image: url('https://randomuser.me/api/portraits/men/32.jpg')"></div>
+                <h3 class="farmer-name">John Mwangi</h3>
+                <div class="farmer-location">Meru County, Kenya</div>
+                <div class="farmer-stats">
+                    <div class="farmer-stat">
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">Projects</div>
+                    </div>
+                    <div class="farmer-stat">
+                        <div class="stat-value">5,000+</div>
+                        <div class="stat-label">Trees Planted</div>
+                    </div>
+                    <div class="farmer-stat">
+                        <div class="stat-value">4.9</div>
+                        <div class="stat-label">Rating</div>
+                    </div>
+                </div>
+                <button class="contact-farmer">Contact Farmer</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="app-footer">
+        <p>&copy; 2025 CarbonConnect Kenya | Empowering smallholder farmers in the carbon market</p>
+    </footer>
+
+    <script>
+        // Tab navigation
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs and panes
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding pane
+                this.classList.add('active');
+                document.getElementById(this.dataset.tab).classList.add('active');
+            });
+        });
+        
+        // Investment options
+        document.querySelectorAll('.investment-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.investment-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+        
+        // Invest button
+        document.querySelector('.invest-button').addEventListener('click', function() {
+            const selectedOption = document.querySelector('.investment-option.selected');
+            let amount = selectedOption ? selectedOption.querySelector('.option-amount').textContent : '';
+            
+            const customAmount = document.querySelector('.custom-amount input').value;
+            if (customAmount) {
+                amount = '$' + customAmount;
+            }
+            
+            if (amount) {
+                alert(`Thank you for your investment of ${amount}! In a real application, you would be directed to a payment page.`);
+            } else {
+                alert('Please select an investment amount.');
+            }
+        });
+        
+        // Comment form
+        document.querySelector('.submit-comment').addEventListener('click', function() {
+            const commentText = document.querySelector('.comment-form textarea').value;
+            if (commentText.trim()) {
+                alert('In a real application, your comment would be posted. Please log in to participate in discussions.');
+                document.querySelector('.comment-form textarea').value = '';
+            } else {
+                alert('Please enter a comment.');
+            }
+        });
+        
+        // Contact farmer button
+        document.querySelector('.contact-farmer').addEventListener('click', function() {
+            alert('In a real application, you would be able to send a message to the farmer. Please log in to contact project owners.');
+        });
+        
+        // Auth buttons
+        document.querySelector('.login-btn').addEventListener('click', function() {
+            window.location.href = '/login';
+        });
+        
+        document.querySelector('.signup-btn').addEventListener('click', function() {
+            window.location.href = '/register';
+        });
+        
+        // Handle dashboard link click
+        document.getElementById('dashboard-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Check if user is authenticated
+            fetch('/api/user/profile', { credentials: 'include' })
+                .then(response => {
+                    if (!response.ok) {
+                        // User is not authenticated, redirect to login
+                        window.location.href = '/login?redirect=/index.html';
+                    } else {
+                        // User is authenticated, proceed to dashboard
+                        window.location.href = '/index.html';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking authentication:', error);
+                    // Redirect to login on error
+                    window.location.href = '/login?redirect=/index.html';
+                });
+        });
+    </script>
+</body>
+</html>

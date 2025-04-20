@@ -1,0 +1,1404 @@
+package main
+
+import (
+	"context"
+	"crypto/rand"
+	"database/sql"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"mime/multipart"
+	"net/http"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"syscall"
+	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/crypto/bcrypt"
+)
+
+// Configuration constants
+const (
+	MaxFileSize      = 10 << 20 // 10 MB
+	MaxDBConnections = 25
+	SessionTimeout   = 24 * time.Hour
+	AllowedFileTypes = "image/jpeg,image/png,image/gif"
+)
+
+// Global variables
+var (
+	db      *sql.DB
+	store   *sessions.CookieStore
+	baseDir = "."
+)
+
+// Structs for JSON responses and requests
+type User struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+	Role     string `json:"role"`
+	Location string `json:"location"`
+	Phone    string `json:"phone"`
+	Email    string `json:"email"`
+}
+
+type Project struct {
+	ID          int       `json:"id"`
+	UserID      int       `json:"user_id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Type        string    `json:"type"`
+	Location    string    `json:"location"`
+	Coordinates string    `json:"coordinates"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+type Activity struct {
+	ID          int       `json:"id"`
+	ProjectID   int       `json:"project_id"`
+	Description string    `json:"description"`
+	PhotoPath   string    `json:"photo_path"`
+	Coordinates string    `json:"coordinates"`
+	Status      string    `json:"status"`
+	Credits     float64   `json:"credits"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+type Transaction struct {
+	ID        int       `json:"id"`
+	UserID    int       `json:"user_id"`
+	Amount    float64   `json:"amount"`
+	Type      string    `json:"type"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// Initialize session store with random key
+func initSessionStore() {
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		log.Fatal("Could not generate session key:", err)
+	}
+	store = sessions.NewCookieStore(key)
+	store.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   int(SessionTimeout.Seconds()),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+	}
+}
+
+// Validate file type
+func validateFileType(file multipart.File) bool {
+	buffer := make([]byte, 512)
+	_, err := file.Read(buffer)
+	if err != nil {
+		return false
+	}
+
+	// Reset file pointer
+	file.Seek(0, 0)
+
+	fileType := http.DetectContentType(buffer)
+	for _, allowedType := range strings.Split(AllowedFileTypes, ",") {
+		if fileType == allowedType {
+			return true
+		}
+	}
+	return false
+}
+
+// Generate secure random filename
+func generateSecureFilename(originalName string) string {
+	ext := filepath.Ext(originalName)
+	randomBytes := make([]byte, 16)
+	rand.Read(randomBytes)
+	return fmt.Sprintf("%s%s", base64.RawURLEncoding.EncodeToString(randomBytes), ext)
+}
+
+// Initialize database with connection pooling
+func initDB() {
+	var err error
+	dbPath := filepath.Join(baseDir, "carbonconnect.db")
+	db, err = sql.Open("sqlite3", dbPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Configure connection pool
+	db.SetMaxOpenConns(MaxDBConnections)
+	db.SetMaxIdleConns(MaxDBConnections / 2)
+	db.SetConnMaxLifetime(time.Hour)
+
+	// Test database connection
+	if err = db.Ping(); err != nil {
+		log.Fatal("Database connection failed:", err)
+	}
+
+	// Create tables if they don't exist
+	createTables()
+}
+
+func createTables() {
+	// Users table
+	_, err := db.Exec(`
+	CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		username TEXT UNIQUE NOT NULL,
+		password TEXT NOT NULL,
+		role TEXT NOT NULL,
+		location TEXT,
+		phone TEXT,
+		email TEXT,
+		credit_balance REAL DEFAULT 0.0,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Projects table
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS projects (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		name TEXT NOT NULL,
+		description TEXT,
+		type TEXT NOT NULL,
+		location TEXT,
+		coordinates TEXT NOT NULL,
+		status TEXT DEFAULT 'pending',
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users (id)
+	)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Activities table
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS activities (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		project_id INTEGER NOT NULL,
+		description TEXT,
+		photo_path TEXT,
+		coordinates TEXT NOT NULL,
+		status TEXT DEFAULT 'pending',
+		credits REAL DEFAULT 0.0,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (project_id) REFERENCES projects (id)
+	)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Transactions table
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS transactions (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		amount REAL NOT NULL,
+		type TEXT NOT NULL,
+		status TEXT DEFAULT 'pending',
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users (id)
+	)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Insert mock data
+	insertMockData()
+}
+
+func insertMockData() {
+	// Check if we already have data
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if count > 0 {
+		return // Data already exists
+	}
+
+	// Create admin user
+	adminPassword, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+	_, err = db.Exec(`
+		INSERT INTO users (username, password, role, email, credit_balance) 
+		VALUES (?, ?, ?, ?, ?)`,
+		"admin", adminPassword, "admin", "admin@carbonconnect.co.ke", 0.0)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Create multiple farmer users
+	farmers := []struct {
+		username string
+		password string
+		location string
+		phone    string
+		email    string
+		balance  float64
+	}{
+		{"john_farmer", "farmer123", "Nakuru", "0712345678", "john@example.com", 25.5},
+		{"mary_farmer", "farmer123", "Kisumu", "0723456789", "mary@example.com", 15.0},
+		{"peter_farmer", "farmer123", "Eldoret", "0734567890", "peter@example.com", 30.0},
+		{"sarah_farmer", "farmer123", "Meru", "0745678901", "sarah@example.com", 20.0},
+	}
+
+	for _, farmer := range farmers {
+		password, _ := bcrypt.GenerateFromPassword([]byte(farmer.password), bcrypt.DefaultCost)
+		result, err := db.Exec(`
+			INSERT INTO users (username, password, role, location, phone, email, credit_balance) 
+			VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			farmer.username, password, "farmer", farmer.location, farmer.phone, farmer.email, farmer.balance)
+		if err != nil {
+			log.Fatal(err)
+		}
+		farmerID, _ := result.LastInsertId()
+
+		// Create projects for each farmer
+		projectTypes := []string{"tree_planting", "biogas", "conservation"}
+		for i, projectType := range projectTypes {
+			projectResult, err := db.Exec(`
+				INSERT INTO projects (user_id, name, description, type, location, coordinates, status) 
+				VALUES (?, ?, ?, ?, ?, ?, ?)`,
+				farmerID,
+				fmt.Sprintf("%s Project in %s", strings.Title(strings.Replace(projectType, "_", " ", -1)), farmer.location),
+				fmt.Sprintf("Sustainable %s initiative in %s County", strings.Replace(projectType, "_", " ", -1), farmer.location),
+				projectType,
+				farmer.location,
+				fmt.Sprintf("%d.%d,%d.%d", i-1, i*2, i+1, i*3), // Mock coordinates
+				"approved")
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			projectID, _ := projectResult.LastInsertId()
+
+			// Create multiple activities for each project
+			for j := 1; j <= 3; j++ {
+				status := "approved"
+				if j == 3 {
+					status = "pending" // Make some activities pending
+				}
+
+				credits := 0.0
+				switch projectType {
+				case "tree_planting":
+					credits = 0.5 * float64(j)
+				case "biogas":
+					credits = 1.0 * float64(j)
+				case "conservation":
+					credits = 0.75 * float64(j)
+				}
+
+				_, err = db.Exec(`
+					INSERT INTO activities (project_id, description, photo_path, coordinates, status, credits) 
+					VALUES (?, ?, ?, ?, ?, ?)`,
+					projectID,
+					fmt.Sprintf("Activity %d for %s project", j, strings.Replace(projectType, "_", " ", -1)),
+					"/uploads/sample_trees.jpg",
+					fmt.Sprintf("%d.%d,%d.%d", i-1, j*2, i+1, j*3), // Mock coordinates
+					status,
+					credits)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				// Create transaction for approved activities
+				if status == "approved" {
+					_, err = db.Exec(`
+						INSERT INTO transactions (user_id, amount, type, status) 
+						VALUES (?, ?, ?, ?)`,
+						farmerID,
+						credits,
+						"credit",
+						"completed")
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
+			}
+		}
+	}
+
+	// Create verifier users
+	verifiers := []struct {
+		username string
+		password string
+		location string
+		phone    string
+		email    string
+	}{
+		{"david_verifier", "verifier123", "Nairobi", "0756789012", "david@example.com"},
+		{"jane_verifier", "verifier123", "Mombasa", "0767890123", "jane@example.com"},
+	}
+
+	for _, verifier := range verifiers {
+		password, _ := bcrypt.GenerateFromPassword([]byte(verifier.password), bcrypt.DefaultCost)
+		_, err = db.Exec(`
+			INSERT INTO users (username, password, role, location, phone, email, credit_balance) 
+			VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			verifier.username, password, "verifier", verifier.location, verifier.phone, verifier.email, 0.0)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// Create sample images directory and placeholder images
+	uploadsDir := filepath.Join(baseDir, "uploads")
+	if _, err := os.Stat(uploadsDir); os.IsNotExist(err) {
+		os.MkdirAll(uploadsDir, 0755)
+	}
+
+	// Create a simple placeholder image
+	placeholderImage := []byte(`<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+		<rect width="100%" height="100%" fill="#4CAF50"/>
+		<text x="50%" y="50%" font-family="Arial" font-size="24" fill="white" text-anchor="middle">Sample Activity Photo</text>
+	</svg>`)
+
+	err = os.WriteFile(filepath.Join(uploadsDir, "sample_trees.jpg"), placeholderImage, 0644)
+	if err != nil {
+		log.Printf("Error creating placeholder image: %v", err)
+	}
+}
+
+// Authentication middleware
+func authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "session")
+		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+			if strings.HasPrefix(r.URL.Path, "/api/") {
+				w.WriteHeader(http.StatusUnauthorized)
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"success": false,
+					"message": "Authentication required",
+				})
+				return
+			} else {
+				http.Redirect(w, r, "/login", http.StatusFound)
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// Role authorization middleware
+func roleMiddleware(roles ...string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			session, _ := store.Get(r, "session")
+			userRole, ok := session.Values["role"].(string)
+			if !ok {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			authorized := false
+			for _, role := range roles {
+				if userRole == role {
+					authorized = true
+					break
+				}
+			}
+
+			if !authorized {
+				http.Error(w, "Forbidden", http.StatusForbidden)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// Route handlers
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(baseDir, "static", "index.html"))
+}
+
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, "Could not parse form", http.StatusBadRequest)
+			return
+		}
+
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+
+		var storedPassword, role string
+		var userID int
+		err = db.QueryRow("SELECT id, password, role FROM users WHERE username = ?", username).Scan(&userID, &storedPassword, &role)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Invalid credentials",
+			})
+			return
+		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password))
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Invalid credentials",
+			})
+			return
+		}
+
+		session, _ := store.Get(r, "session")
+		session.Values["authenticated"] = true
+		session.Values["user_id"] = userID
+		session.Values["username"] = username
+		session.Values["role"] = role
+		err = session.Save(r, w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": true,
+			"role":    role,
+		})
+	} else {
+		http.ServeFile(w, r, filepath.Join(baseDir, "static", "login.html"))
+	}
+}
+
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session")
+	session.Values["authenticated"] = false
+	session.Values["user_id"] = nil
+	session.Values["username"] = nil
+	session.Values["role"] = nil
+	session.Save(r, w)
+	http.Redirect(w, r, "/login", http.StatusFound)
+}
+
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, "Could not parse form", http.StatusBadRequest)
+			return
+		}
+
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+		email := r.FormValue("email")
+		phone := r.FormValue("phone")
+		location := r.FormValue("location")
+		role := "farmer" // Default role for new users
+
+		// Check if username already exists
+		var exists int
+		err = db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).Scan(&exists)
+		if err != nil {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
+		if exists > 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Username already exists",
+			})
+			return
+		}
+
+		// Hash password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			http.Error(w, "Could not hash password", http.StatusInternalServerError)
+			return
+		}
+
+		// Insert new user
+		_, err = db.Exec("INSERT INTO users (username, password, role, email, phone, location) VALUES (?, ?, ?, ?, ?, ?)",
+			username, hashedPassword, role, email, phone, location)
+		if err != nil {
+			http.Error(w, "Could not create user", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": true,
+			"message": "User registered successfully",
+		})
+	} else {
+		http.ServeFile(w, r, filepath.Join(baseDir, "static", "register.html"))
+	}
+}
+
+// Project handlers
+func createProjectHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	session, _ := store.Get(r, "session")
+	userID := session.Values["user_id"].(int)
+
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Could not parse form", http.StatusBadRequest)
+		return
+	}
+
+	project := Project{
+		UserID:      userID,
+		Name:        r.FormValue("name"),
+		Description: r.FormValue("description"),
+		Type:        r.FormValue("type"),
+		Location:    r.FormValue("location"),
+		Coordinates: r.FormValue("coordinates"),
+		Status:      "pending",
+		CreatedAt:   time.Now(),
+	}
+
+	result, err := db.Exec(`
+		INSERT INTO projects (user_id, name, description, type, location, coordinates, status) 
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		project.UserID, project.Name, project.Description, project.Type,
+		project.Location, project.Coordinates, project.Status)
+	if err != nil {
+		http.Error(w, "Could not create project", http.StatusInternalServerError)
+		return
+	}
+
+	id, _ := result.LastInsertId()
+	project.ID = int(id)
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"project": project,
+	})
+}
+
+func getProjectsHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session")
+	userID := session.Values["user_id"].(int)
+	role := session.Values["role"].(string)
+
+	var rows *sql.Rows
+	var err error
+
+	if role == "admin" || role == "verifier" {
+		// Admins and verifiers can see all projects
+		rows, err = db.Query("SELECT id, user_id, name, description, type, location, coordinates, status, created_at FROM projects ORDER BY created_at DESC")
+	} else {
+		// Farmers can only see their own projects
+		rows, err = db.Query("SELECT id, user_id, name, description, type, location, coordinates, status, created_at FROM projects WHERE user_id = ? ORDER BY created_at DESC", userID)
+	}
+
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	projects := []Project{}
+	for rows.Next() {
+		var p Project
+		var createdAtStr string
+		err := rows.Scan(&p.ID, &p.UserID, &p.Name, &p.Description, &p.Type, &p.Location, &p.Coordinates, &p.Status, &createdAtStr)
+		if err != nil {
+			continue
+		}
+		p.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
+		projects = append(projects, p)
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":  true,
+		"projects": projects,
+	})
+}
+
+func updateProjectStatusHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	session, _ := store.Get(r, "session")
+	role := session.Values["role"].(string)
+
+	if role != "admin" && role != "verifier" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	projectID, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid project ID", http.StatusBadRequest)
+		return
+	}
+
+	err = r.ParseForm()
+	if err != nil {
+		http.Error(w, "Could not parse form", http.StatusBadRequest)
+		return
+	}
+
+	status := r.FormValue("status")
+	if status != "approved" && status != "rejected" {
+		http.Error(w, "Invalid status", http.StatusBadRequest)
+		return
+	}
+
+	_, err = db.Exec("UPDATE projects SET status = ? WHERE id = ?", status, projectID)
+	if err != nil {
+		http.Error(w, "Could not update project", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": fmt.Sprintf("Project %s successfully", status),
+	})
+}
+
+// Activity handlers
+func createActivityHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Limit request size
+	r.Body = http.MaxBytesReader(w, r.Body, MaxFileSize)
+	err := r.ParseMultipartForm(MaxFileSize)
+	if err != nil {
+		http.Error(w, "File too large", http.StatusBadRequest)
+		return
+	}
+
+	// Get form values
+	projectIDStr := r.FormValue("project_id")
+	projectID, err := strconv.Atoi(projectIDStr)
+	if err != nil {
+		http.Error(w, "Invalid project ID", http.StatusBadRequest)
+		return
+	}
+
+	description := r.FormValue("description")
+	coordinates := r.FormValue("coordinates")
+
+	// Check if project exists and user has permission
+	session, _ := store.Get(r, "session")
+	userID := session.Values["user_id"].(int)
+	role := session.Values["role"].(string)
+
+	var projectUserID int
+	err = db.QueryRow("SELECT user_id FROM projects WHERE id = ?", projectID).Scan(&projectUserID)
+	if err != nil {
+		http.Error(w, "Project not found", http.StatusNotFound)
+		return
+	}
+
+	if role != "admin" && userID != projectUserID {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Handle file upload with validation
+	file, handler, err := r.FormFile("photo")
+	if err != nil {
+		http.Error(w, "Error retrieving file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	if !validateFileType(file) {
+		http.Error(w, "Invalid file type", http.StatusBadRequest)
+		return
+	}
+
+	// Create uploads directory if it doesn't exist
+	uploadsDir := filepath.Join(baseDir, "uploads")
+	if _, err := os.Stat(uploadsDir); os.IsNotExist(err) {
+		err = os.MkdirAll(uploadsDir, 0o755)
+		if err != nil {
+			http.Error(w, "Could not create uploads directory", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse form to get file
+	err := r.ParseMultipartForm(10 << 20) // 10 MB max
+	if err != nil {
+		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Error retrieving file: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	// Create uploads directory if it doesn't exist
+	uploadsDir := filepath.Join(baseDir, "uploads")
+	if _, err := os.Stat(uploadsDir); os.IsNotExist(err) {
+		os.MkdirAll(uploadsDir, 0o755)
+	}
+
+	// Generate secure filename
+	filename := generateSecureFilename(handler.Filename)
+	filePath := filepath.Join(uploadsDir, filename)
+
+	// Create file
+	dst, err := os.Create(filePath)
+	if err != nil {
+		http.Error(w, "Could not create file", http.StatusInternalServerError)
+		return
+	}
+	defer dst.Close()
+
+	// Copy file data
+	_, err = io.Copy(dst, file)
+	if err != nil {
+		http.Error(w, "Could not save file", http.StatusInternalServerError)
+		return
+	}
+
+	// Calculate initial carbon credits based on activity type
+	var projectType string
+	err = db.QueryRow("SELECT type FROM projects WHERE id = ?", projectID).Scan(&projectType)
+	if err != nil {
+		http.Error(w, "Could not get project type", http.StatusInternalServerError)
+		return
+	}
+
+	// Simple carbon credit calculation based on project type
+	var credits float64
+	switch projectType {
+	case "tree_planting":
+		credits = 0.5 // 0.5 credits per tree planting activity
+	case "biogas":
+		credits = 1.0 // 1 credit per biogas activity
+	case "conservation":
+		credits = 0.75 // 0.75 credits per conservation activity
+	default:
+		credits = 0.25 // Default value for other activities
+	}
+
+	// Save activity to database
+	result, err := db.Exec(`
+		INSERT INTO activities (project_id, description, photo_path, coordinates, status, credits) 
+		VALUES (?, ?, ?, ?, ?, ?)`,
+		projectID, description, "/uploads/"+filename, coordinates, "pending", credits)
+	if err != nil {
+		http.Error(w, "Could not create activity", http.StatusInternalServerError)
+		return
+	}
+
+	id, _ := result.LastInsertId()
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":     true,
+		"activity_id": id,
+		"message":     "Activity submitted for verification",
+	})
+}
+
+func getActivitiesHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	projectID, err := strconv.Atoi(vars["projectId"])
+	if err != nil {
+		http.Error(w, "Invalid project ID", http.StatusBadRequest)
+		return
+	}
+
+	session, _ := store.Get(r, "session")
+	userID := session.Values["user_id"].(int)
+	role := session.Values["role"].(string)
+
+	// Check if user has permission to view activities
+	if role != "admin" && role != "verifier" {
+		var count int
+		err = db.QueryRow("SELECT COUNT(*) FROM projects WHERE id = ? AND user_id = ?", projectID, userID).Scan(&count)
+		if err != nil || count == 0 {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+	}
+
+	rows, err := db.Query(`
+		SELECT id, project_id, description, photo_path, coordinates, status, credits, created_at 
+		FROM activities 
+		WHERE project_id = ? 
+		ORDER BY created_at DESC`, projectID)
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	activities := []Activity{}
+	for rows.Next() {
+		var a Activity
+		var createdAtStr string
+		err := rows.Scan(&a.ID, &a.ProjectID, &a.Description, &a.PhotoPath, &a.Coordinates, &a.Status, &a.Credits, &createdAtStr)
+		if err != nil {
+			continue
+		}
+		a.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
+		activities = append(activities, a)
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":    true,
+		"activities": activities,
+	})
+}
+
+func verifyActivityHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	session, _ := store.Get(r, "session")
+	role := session.Values["role"].(string)
+
+	if role != "admin" && role != "verifier" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	activityID, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid activity ID", http.StatusBadRequest)
+		return
+	}
+
+	err = r.ParseForm()
+	if err != nil {
+		http.Error(w, "Could not parse form", http.StatusBadRequest)
+		return
+	}
+
+	status := r.FormValue("status")
+	if status != "approved" && status != "rejected" {
+		http.Error(w, "Invalid status", http.StatusBadRequest)
+		return
+	}
+
+	// Get activity details
+	var projectID int
+	var credits float64
+	err = db.QueryRow("SELECT project_id, credits FROM activities WHERE id = ?", activityID).Scan(&projectID, &credits)
+	if err != nil {
+		http.Error(w, "Activity not found", http.StatusNotFound)
+		return
+	}
+
+	// Update activity status
+	_, err = db.Exec("UPDATE activities SET status = ? WHERE id = ?", status, activityID)
+	if err != nil {
+		http.Error(w, "Could not update activity", http.StatusInternalServerError)
+		return
+	}
+
+	// If approved, increase user's credit balance
+	if status == "approved" {
+		var userID int
+		err = db.QueryRow("SELECT user_id FROM projects WHERE id = ?", projectID).Scan(&userID)
+		if err != nil {
+			http.Error(w, "Could not find project owner", http.StatusInternalServerError)
+			return
+		}
+
+		_, err = db.Exec("UPDATE users SET credit_balance = credit_balance + ? WHERE id = ?", credits, userID)
+		if err != nil {
+			http.Error(w, "Could not update credit balance", http.StatusInternalServerError)
+			return
+		}
+
+		// Record transaction
+		_, err = db.Exec(`
+			INSERT INTO transactions (user_id, amount, type, status) 
+			VALUES (?, ?, ?, ?)`,
+			userID, credits, "credit", "completed")
+		if err != nil {
+			log.Println("Could not record transaction:", err)
+		}
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": fmt.Sprintf("Activity %s successfully", status),
+	})
+}
+
+// User and credit handlers
+func getUserProfileHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session")
+	userID := session.Values["user_id"].(int)
+
+	var user User
+	var creditBalance float64
+	err := db.QueryRow(`
+		SELECT id, username, role, location, phone, email, credit_balance 
+		FROM users 
+		WHERE id = ?`, userID).Scan(
+		&user.ID, &user.Username, &user.Role, &user.Location, &user.Phone, &user.Email, &creditBalance)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	// Get transaction history
+	rows, err := db.Query(`
+		SELECT id, amount, type, status, created_at 
+		FROM transactions 
+		WHERE user_id = ? 
+		ORDER BY created_at DESC 
+		LIMIT 10`, userID)
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	transactions := []Transaction{}
+	for rows.Next() {
+		var t Transaction
+		var createdAtStr string
+		err := rows.Scan(&t.ID, &t.Amount, &t.Type, &t.Status, &createdAtStr)
+		if err != nil {
+			continue
+		}
+		t.UserID = userID
+		t.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", createdAtStr)
+		transactions = append(transactions, t)
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":        true,
+		"user":           user,
+		"credit_balance": creditBalance,
+		"transactions":   transactions,
+	})
+}
+
+func withdrawCreditsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	session, _ := store.Get(r, "session")
+	userID := session.Values["user_id"].(int)
+
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Could not parse form", http.StatusBadRequest)
+		return
+	}
+
+	amountStr := r.FormValue("amount")
+	phone := r.FormValue("phone")
+
+	amount, err := strconv.ParseFloat(amountStr, 64)
+	if err != nil || amount <= 0 {
+		http.Error(w, "Invalid amount", http.StatusBadRequest)
+		return
+	}
+
+	// Check if user has enough credits
+	var balance float64
+	err = db.QueryRow("SELECT credit_balance FROM users WHERE id = ?", userID).Scan(&balance)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	if balance < amount {
+		http.Error(w, "Insufficient credit balance", http.StatusBadRequest)
+		return
+	}
+
+	// Record transaction
+	result, err := db.Exec(`
+		INSERT INTO transactions (user_id, amount, type, status) 
+		VALUES (?, ?, ?, ?)`,
+		userID, amount, "withdrawal", "pending")
+	if err != nil {
+		http.Error(w, "Could not create transaction", http.StatusInternalServerError)
+		return
+	}
+
+	transactionID, _ := result.LastInsertId()
+
+	// Update user balance
+	_, err = db.Exec("UPDATE users SET credit_balance = credit_balance - ? WHERE id = ?", amount, userID)
+	if err != nil {
+		// If balance update fails, mark transaction as failed
+		db.Exec("UPDATE transactions SET status = 'failed' WHERE id = ?", transactionID)
+		http.Error(w, "Could not update balance", http.StatusInternalServerError)
+		return
+	}
+
+	// Simulate M-Pesa processing
+	// In a real app, you would integrate with M-Pesa API
+	go func() {
+		time.Sleep(5 * time.Second)
+		db.Exec("UPDATE transactions SET status = 'completed' WHERE id = ?", transactionID)
+	}()
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":        true,
+		"message":        fmt.Sprintf("Withdrawal of %.2f credits to %s initiated", amount, phone),
+		"transaction_id": transactionID,
+	})
+}
+
+// Admin handlers
+func getAllUsersHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session")
+	role := session.Values["role"].(string)
+
+	if role != "admin" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	rows, err := db.Query(`
+		SELECT id, username, role, location, phone, email, credit_balance 
+		FROM users 
+		ORDER BY id`)
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	users := []map[string]interface{}{}
+	for rows.Next() {
+		var user User
+		var creditBalance float64
+		err := rows.Scan(
+			&user.ID, &user.Username, &user.Role, &user.Location, &user.Phone, &user.Email, &creditBalance)
+		if err != nil {
+			continue
+		}
+
+		users = append(users, map[string]interface{}{
+			"id":             user.ID,
+			"username":       user.Username,
+			"role":           user.Role,
+			"location":       user.Location,
+			"phone":          user.Phone,
+			"email":          user.Email,
+			"credit_balance": creditBalance,
+		})
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"users":   users,
+	})
+}
+
+func updateUserRoleHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	session, _ := store.Get(r, "session")
+	role := session.Values["role"].(string)
+
+	if role != "admin" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	targetUserID, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	err = r.ParseForm()
+	if err != nil {
+		http.Error(w, "Could not parse form", http.StatusBadRequest)
+		return
+	}
+
+	newRole := r.FormValue("role")
+	if newRole != "farmer" && newRole != "verifier" && newRole != "admin" {
+		http.Error(w, "Invalid role", http.StatusBadRequest)
+		return
+	}
+
+	_, err = db.Exec("UPDATE users SET role = ? WHERE id = ?", newRole, targetUserID)
+	if err != nil {
+		http.Error(w, "Could not update user role", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "User role updated successfully",
+	})
+}
+
+// Reporting handlers
+func getDashboardStatsHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session")
+	userID := session.Values["user_id"].(int)
+	role := session.Values["role"].(string)
+
+	stats := map[string]interface{}{}
+
+	// Based on role, get different statistics
+	if role == "admin" || role == "verifier" {
+		// Total users
+		var totalUsers int
+		db.QueryRow("SELECT COUNT(*) FROM users").Scan(&totalUsers)
+		stats["total_users"] = totalUsers
+
+		// Total projects
+		var totalProjects int
+		db.QueryRow("SELECT COUNT(*) FROM projects").Scan(&totalProjects)
+		stats["total_projects"] = totalProjects
+
+		// Total activities
+		var totalActivities int
+		db.QueryRow("SELECT COUNT(*) FROM activities").Scan(&totalActivities)
+		stats["total_activities"] = totalActivities
+
+		// Total credits issued
+		var totalCredits float64
+		db.QueryRow("SELECT SUM(credits) FROM activities WHERE status = 'approved'").Scan(&totalCredits)
+		stats["total_credits"] = totalCredits
+
+		// Pending verifications
+		var pendingActivities int
+		db.QueryRow("SELECT COUNT(*) FROM activities WHERE status = 'pending'").Scan(&pendingActivities)
+		stats["pending_activities"] = pendingActivities
+
+		// Project type distribution
+		rows, err := db.Query(`
+			SELECT type, COUNT(*) as count 
+			FROM projects 
+			GROUP BY type`)
+		if err == nil {
+			defer rows.Close()
+			projectTypes := map[string]int{}
+			for rows.Next() {
+				var pType string
+				var count int
+				rows.Scan(&pType, &count)
+				projectTypes[pType] = count
+			}
+			stats["project_types"] = projectTypes
+		}
+	} else {
+		// Farmer stats
+		var projectCount int
+		db.QueryRow("SELECT COUNT(*) FROM projects WHERE user_id = ?", userID).Scan(&projectCount)
+		stats["project_count"] = projectCount
+
+		var activityCount int
+		db.QueryRow(`
+			SELECT COUNT(*) 
+			FROM activities a 
+			JOIN projects p ON a.project_id = p.id 
+			WHERE p.user_id = ?`, userID).Scan(&activityCount)
+		stats["activity_count"] = activityCount
+
+		var approvedActivities int
+		db.QueryRow(`
+			SELECT COUNT(*) 
+			FROM activities a 
+			JOIN projects p ON a.project_id = p.id 
+			WHERE p.user_id = ? AND a.status = 'approved'`, userID).Scan(&approvedActivities)
+		stats["approved_activities"] = approvedActivities
+
+		var pendingActivities int
+		db.QueryRow(`
+			SELECT COUNT(*) 
+			FROM activities a 
+			JOIN projects p ON a.project_id = p.id 
+			WHERE p.user_id = ? AND a.status = 'pending'`, userID).Scan(&pendingActivities)
+		stats["pending_activities"] = pendingActivities
+
+		var totalEarnedCredits float64
+		db.QueryRow(`
+			SELECT SUM(a.credits) 
+			FROM activities a 
+			JOIN projects p ON a.project_id = p.id 
+			WHERE p.user_id = ? AND a.status = 'approved'`, userID).Scan(&totalEarnedCredits)
+		stats["total_earned_credits"] = totalEarnedCredits
+
+		var currentBalance float64
+		db.QueryRow("SELECT credit_balance FROM users WHERE id = ?", userID).Scan(&currentBalance)
+		stats["current_balance"] = currentBalance
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"stats":   stats,
+	})
+}
+
+// Helper function to check if user is authenticated
+func isAuthenticated(r *http.Request) bool {
+	session, _ := store.Get(r, "session")
+	if auth, ok := session.Values["authenticated"].(bool); ok && auth {
+		return true
+	}
+	return false
+}
+
+func main() {
+	// Initialize components
+	initSessionStore()
+	initDB()
+	defer db.Close()
+
+	// Create required directories
+	requiredDirs := []string{"uploads", "static", "logs"}
+	for _, dir := range requiredDirs {
+		dir = filepath.Join(baseDir, dir)
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			os.MkdirAll(dir, 0o755)
+		}
+	}
+
+	// Initialize router with middleware
+	r := mux.NewRouter()
+
+	// Add CORS middleware
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	// Static files
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(baseDir, "static")))))
+	r.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir(filepath.Join(baseDir, "uploads")))))
+
+	// Error pages
+	r.HandleFunc("/404", serveErrorPage("404.html")).Methods("GET")
+	r.HandleFunc("/403", serveErrorPage("403.html")).Methods("GET")
+	r.HandleFunc("/500", serveErrorPage("500.html")).Methods("GET")
+	r.HandleFunc("/maintenance", serveErrorPage("maintenance.html")).Methods("GET")
+	r.HandleFunc("/offline", serveErrorPage("offline.html")).Methods("GET")
+	r.HandleFunc("/error", serveErrorPage("error.html")).Methods("GET")
+
+	// Auth routes
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if isAuthenticated(r) {
+			indexHandler(w, r)
+		} else {
+			http.Redirect(w, r, "/login", http.StatusFound)
+		}
+	})
+	r.HandleFunc("/login", loginHandler)
+	r.HandleFunc("/register", registerHandler)
+	r.HandleFunc("/logout", logoutHandler)
+
+	// API routes - protected by authentication middleware
+	api := r.PathPrefix("/api").Subrouter()
+	api.Use(authMiddleware)
+
+	// User API
+	api.HandleFunc("/profile", getUserProfileHandler).Methods("GET")
+	api.HandleFunc("/withdraw", withdrawCreditsHandler).Methods("POST")
+
+	// Project API
+	api.HandleFunc("/projects", createProjectHandler).Methods("POST")
+	api.HandleFunc("/projects", getProjectsHandler).Methods("GET")
+	api.HandleFunc("/projects/{id}/status", updateProjectStatusHandler).Methods("POST")
+
+	// Activity API
+	api.HandleFunc("/activities/create", createActivityHandler).Methods("POST")
+	api.HandleFunc("/projects/{projectId}/activities", getActivitiesHandler).Methods("GET")
+	api.HandleFunc("/activities/{id}/verify", verifyActivityHandler).Methods("POST")
+
+	// Admin API
+	adminApi := api.PathPrefix("/admin").Subrouter()
+	adminApi.Use(roleMiddleware("admin"))
+	adminApi.HandleFunc("/users", getAllUsersHandler).Methods("GET")
+	adminApi.HandleFunc("/users/{id}/role", updateUserRoleHandler).Methods("POST")
+
+	// Dashboard stats
+	api.HandleFunc("/dashboard", getDashboardStatsHandler).Methods("GET")
+
+	// Set custom 404 handler for undefined routes
+	r.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	
+	// Custom error handlers
+	r.MethodNotAllowedHandler = http.HandlerFunc(methodNotAllowedHandler)
+
+	// Graceful shutdown
+	srv := &http.Server{
+		Addr:         ":8080",
+		Handler:      r,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	go func() {
+		fmt.Println("Server running on http://localhost:8080...")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("Server failed:", err)
+		}
+	}()
+
+	// Wait for signal to gracefully shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+
+	// Graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server shutdown failed:", err)
+	}
+}

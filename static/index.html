@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarbonConnect Kenya</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <img src="/static/img/logo.svg" alt="CarbonConnect Logo">
+                <h1>CarbonConnect<span>Kenya</span></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#" class="active" data-page="dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+                    <li><a href="#" data-page="projects"><i class="fas fa-seedling"></i> Projects</a></li>
+                    <li><a href="#" data-page="activities"><i class="fas fa-list"></i> Activities</a></li>
+                    <li><a href="#" data-page="credits"><i class="fas fa-coins"></i> Credits</a></li>
+                    <li><a href="/explore.html"><i class="fas fa-globe"></i> Explore</a></li>
+                    <li class="admin-only hidden"><a href="#" data-page="users"><i class="fas fa-users"></i> Users</a></li>
+                    <li class="verifier-only hidden"><a href="#" data-page="verify"><i class="fas fa-check-circle"></i> Verify</a></li>
+                </ul>
+            </nav>
+            <div class="user-profile">
+                <span class="username">Loading...</span>
+                <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <section id="dashboard" class="page active">
+                <h2>Dashboard</h2>
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-seedling"></i></div>
+                        <div class="stat-info">
+                            <h3>Projects</h3>
+                            <p class="stat-value" id="project-count">--</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-list"></i></div>
+                        <div class="stat-info">
+                            <h3>Activities</h3>
+                            <p class="stat-value" id="activity-count">--</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-info">
+                            <h3>Verified</h3>
+                            <p class="stat-value" id="verified-count">--</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                        <div class="stat-info">
+                            <h3>Credits</h3>
+                            <p class="stat-value" id="credit-balance">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-charts">
+                    <div class="chart-container admin-only hidden">
+                        <h3>Projects by Type</h3>
+                        <canvas id="project-types-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Activity Status</h3>
+                        <canvas id="activity-status-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="recent-activities">
+                    <h3>Recent Activities</h3>
+                    <div class="activity-list" id="recent-activities-list">
+                        <p class="empty-message">No recent activities to display.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Projects Page -->
+            <section id="projects" class="page">
+                <div class="page-header">
+                    <h2>My Projects</h2>
+                    <button class="primary-btn" id="new-project-btn"><i class="fas fa-plus"></i> New Project</button>
+                </div>
+
+                <div class="projects-list" id="projects-list">
+                    <p class="empty-message">No projects to display. Create your first project!</p>
+                </div>
+
+                <!-- New Project Modal -->
+                <div class="modal" id="project-modal">
+                    <div class="modal-content">
+                        <span class="close-btn">&times;</span>
+                        <h3>Create New Project</h3>
+                        <form id="project-form">
+                            <div class="form-group">
+                                <label for="project-name">Project Name</label>
+                                <input type="text" id="project-name" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="project-type">Project Type</label>
+                                <select id="project-type" name="type" required>
+                                    <option value="">Select a type</option>
+                                    <option value="tree_planting">Tree Planting</option>
+                                    <option value="biogas">Biogas Installation</option>
+                                    <option value="conservation">Conservation Agriculture</option>
+                                    <option value="renewable">Renewable Energy</option>
+                                    <option value="waste">Waste Management</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="project-description">Description</label>
+                                <textarea id="project-description" name="description" rows="3" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="project-location">Location Name</label>
+                                <input type="text" id="project-location" name="location" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Select Location on Map</label>
+                                <div id="project-map" class="map-container"></div>
+                                <input type="hidden" id="project-coordinates" name="coordinates" required>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="primary-btn">Create Project</button>
+                                <button type="button" class="secondary-btn cancel-btn">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Activities Page -->
+            <section id="activities" class="page">
+                <div class="page-header">
+                    <h2>Project Activities</h2>
+                    <div class="project-selector">
+                        <label for="activity-project-select">Select Project:</label>
+                        <select id="activity-project-select">
+                            <option value="">Select a project</option>
+                        </select>
+                        <button class="primary-btn" id="new-activity-btn" disabled><i class="fas fa-plus"></i> Log Activity</button>
+                    </div>
+                </div>
+
+                <div class="activities-list" id="activities-list">
+                    <p class="empty-message">Select a project to view activities or create a new one.</p>
+                </div>
+
+                <!-- New Activity Modal -->
+                <div class="modal" id="activity-modal">
+                    <div class="modal-content">
+                        <span class="close-btn">&times;</span>
+                        <h3>Log New Activity</h3>
+                        <form id="activity-form">
+                            <input type="hidden" id="activity-project-id" name="project_id">
+                            <div class="form-group">
+                                <label for="activity-description">Description</label>
+                                <textarea id="activity-description" name="description" rows="3" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="activity-photo">Upload Photo Evidence</label>
+                                <input type="file" id="activity-photo" name="photo" accept="image/*" required>
+                                <div id="photo-preview" class="photo-preview"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm Location on Map</label>
+                                <div id="activity-map" class="map-container"></div>
+                                <input type="hidden" id="activity-coordinates" name="coordinates" required>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="primary-btn">Submit Activity</button>
+                                <button type="button" class="secondary-btn cancel-btn">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Credits Page -->
+            <section id="credits" class="page">
+                <h2>Carbon Credits</h2>
+                <div class="credits-overview">
+                    <div class="credit-balance">
+                        <h3>Current Balance</h3>
+                        <div class="balance-amount"><span id="credit-balance-value">0.00</span> credits</div>
+                        <button class="primary-btn" id="withdraw-btn"><i class="fas fa-money-bill-wave"></i> Withdraw to M-Pesa</button>
+                    </div>
+                    <div class="credit-history">
+                        <h3>Transaction History</h3>
+                        <div class="transactions-list" id="transactions-list">
+                            <p class="empty-message">No transaction history to display.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Withdraw Modal -->
+                <div class="modal" id="withdraw-modal">
+                    <div class="modal-content">
+                        <span class="close-btn">&times;</span>
+                        <h3>Withdraw Credits to M-Pesa</h3>
+                        <form id="withdraw-form">
+                            <div class="form-group">
+                                <label for="withdraw-amount">Amount (Credits)</label>
+                                <input type="number" id="withdraw-amount" name="amount" min="1" step="0.01" required>
+                                <p class="info-text">1 Credit = KES 100</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="withdraw-phone">M-Pesa Phone Number</label>
+                                <input type="tel" id="withdraw-phone" name="phone" placeholder="e.g. 07XXXXXXXX" pattern="0[0-9]{9}" required>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="primary-btn">Withdraw</button>
+                                <button type="button" class="secondary-btn cancel-btn">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Admin Users Page -->
+            <section id="users" class="page admin-only hidden">
+                <h2>Manage Users</h2>
+                <div class="users-list" id="users-list">
+                    <p class="empty-message">Loading users...</p>
+                </div>
+
+                <!-- User Role Modal -->
+                <div class="modal" id="role-modal">
+                    <div class="modal-content">
+                        <span class="close-btn">&times;</span>
+                        <h3>Update User Role</h3>
+                        <form id="role-form">
+                            <input type="hidden" id="role-user-id" name="user_id">
+                            <div class="form-group">
+                                <p id="role-username"></p>
+                            </div>
+                            <div class="form-group">
+                                <label for="user-role">Select Role</label>
+                                <select id="user-role" name="role" required>
+                                    <option value="farmer">Farmer</option>
+                                    <option value="verifier">Verifier</option>
+                                    <option value="admin">Administrator</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="primary-btn">Update Role</button>
+                                <button type="button" class="secondary-btn cancel-btn">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Verifier Page -->
+            <section id="verify" class="page verifier-only hidden">
+                <h2>Verification Queue</h2>
+                <div class="verification-filters">
+                    <select id="verify-filter">
+                        <option value="all">All Projects</option>
+                        <option value="pending" selected>Pending Only</option>
+                    </select>
+                </div>
+                <div class="verify-list" id="verify-list">
+                    <p class="empty-message">No items to verify.</p>
+                </div>
+
+                <!-- Verification Modal -->
+                <div class="modal" id="verify-modal">
+                    <div class="modal-content">
+                        <span class="close-btn">&times;</span>
+                        <h3>Verify Activity</h3>
+                        <div id="verify-details" class="verify-details">
+                            <div class="verify-image">
+                                <img id="verify-image" src="" alt="Activity Evidence">
+                            </div>
+                            <div class="verify-info">
+                                <p><strong>Project:</strong> <span id="verify-project"></span></p>
+                                <p><strong>Description:</strong> <span id="verify-description"></span></p>
+                                <p><strong>Submitted:</strong> <span id="verify-date"></span></p>
+                                <p><strong>Location:</strong> <span id="verify-location"></span></p>
+                                <div id="verify-map" class="map-container"></div>
+                            </div>
+                        </div>
+                        <form id="verify-form">
+                            <input type="hidden" id="verify-activity-id" name="activity_id">
+                            <div class="form-group">
+                                <label for="verify-status">Verification Decision</label>
+                                <select id="verify-status" name="status" required>
+                                    <option value="approved">Approve (Grant Credits)</option>
+                                    <option value="rejected">Reject (Insufficient Evidence)</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="primary-btn">Submit Decision</button>
+                                <button type="button" class="secondary-btn cancel-btn">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2025 CarbonConnect Kenya | Empowering smallholder farmers in the carbon market</p>
+        </footer>
+    </div>
+
+    <div class="toast" id="toast">
+        <div class="toast-content">
+            <span class="toast-message">Message here</span>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.7.0/chart.min.js"></script>
+    <script src="/static/js/maps.js"></script>
+    <script src="/static/js/mock-data.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
